@@ -2,31 +2,50 @@
 @model RegisterDto
 @{
     ViewData["Title"] = "Register";
+    Layout = "_AuthLayout";
 }
 
-<h1>Kullanıcı Kaydı</h1>
-
-<form method="post">
-    <label>Adınız</label>
-    <input type="text" asp-for="FirstName" class="form-control" required/>
-    <br/>
-        <label>Soyad</label>
-    <input type="text" asp-for="LastName" class="form-control" required/>
-    <br/>
-    <label>Kullanıcı Adı</label>
-    <input type="text" asp-for="UserName" class="form-control" required />
-    <br />
-    <label>Email</label>
-    <input type="text" asp-for="Email" class="form-control" required />
-    <br />
-    <label>Şifre</label>
-    <input type="password" asp-for="Password" class="form-control" required />
-    <br />
-    <label>Şifre Tekrar</label>
-    <input type="password" asp-for="ConfirmPassword" class="form-control" required />
-    <br />
-    <span class="text-danger">@Html.ValidationSummary()</span>
-    <button class="btn btn-outline-dark">Kayıt Ol</button>
-
-
-</form>
+<!-- Card -->
+<div class="bg-surface-container-lowest w-full max-w-[420px] rounded-xl custom-shadow border border-outline-variant p-[40px]">
+    <div class="text-center mb-8">
+        <h1 class="font-headline-lg text-headline-lg text-secondary mb-2">Hesap Oluştur</h1>
+        <p class="font-body-md text-body-md text-on-surface-variant">HMail deneyimine bugün başlayın.</p>
+    </div>
+    <form class="space-y-5" method="POST">
+        <div class="grid grid-cols-2 gap-4">
+            <div>
+                <label class="block font-label-md text-label-md text-secondary mb-2" asp-for="FirstName">Ad</label>
+                <input class="form-input w-full h-[44px] rounded-lg bg-surface-container-lowest text-on-surface focus:outline-none focus:ring-0"  required="" type="text" asp-for="FirstName"/>
+            </div>
+            <div>
+                <label class="block font-label-md text-label-md text-secondary mb-2" asp-for="LastName">Soyad</label>
+                <input class="form-input w-full h-[44px] rounded-lg bg-surface-container-lowest text-on-surface focus:outline-none focus:ring-0" asp-for="LastName" required="" type="text"  />
+            </div>
+        </div>
+        <div>
+            <label class="block font-label-md text-label-md text-secondary mb-2" asp-for="UserName">Kullanıcı adı</label>
+            <input class="form-input w-full h-[44px] rounded-lg bg-surface-container-lowest text-on-surface focus:outline-none focus:ring-0" asp-for="UserName" required="" type="text" />
+        </div>
+        <div>
+            <label class="block font-label-md text-label-md text-secondary mb-2" asp-for="Email">E-posta</label>
+            <input class="form-input w-full h-[44px] rounded-lg bg-surface-container-lowest text-on-surface focus:outline-none focus:ring-0" asp-for="Email" required="" type="email" />
+        </div>
+        <div>
+            <label class="block font-label-md text-label-md text-secondary mb-2" asp-for="Password">Şifre</label>
+            <input class="form-input w-full h-[44px] rounded-lg bg-surface-container-lowest text-on-surface focus:outline-none focus:ring-0" asp-for="Password" required="" type="password" />
+            <p class="mt-2 text-xs text-on-surface-variant/70">Şifre en az 6 karakter, büyük harf, küçük harf, rakam ve özel karakter içermelidir.</p>
+        </div>
+        <div>
+            <label class="block font-label-md text-label-md text-secondary mb-2" asp-for="ConfirmPassword">Şifre tekrar</label>
+            <input class="form-input w-full h-[44px] rounded-lg bg-surface-container-lowest text-on-surface focus:outline-none focus:ring-0" asp-for="ConfirmPassword" required="" type="password" />
+        </div>
+        <div class="pt-2">
+            <button class="w-full flex justify-center items-center h-[44px] bg-primary-container text-on-primary rounded-lg font-label-md text-label-md hover:bg-primary-container/90 transition-colors" type="submit">
+                Kayıt Ol
+            </button>
+        </div>
+    </form>
+    <span class="text-red-600 text-sm">@Html.ValidationSummary(false)</span>
+    <div class="mt-8 text-center">
+        <a class="font-label-md text-label-md text-on-surface-variant hover:text-primary transition-colors" asp-controller="Auth" asp-action="Login">Zaten hesabın var mı? Giriş yap</a>
+    </div>

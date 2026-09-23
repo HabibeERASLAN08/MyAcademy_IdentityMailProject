@@ -1,0 +1,77 @@
+﻿@model UpdateProfileDto
+@{
+    ViewData["Title"] = "Profil";
+    Layout = "~/Views/Shared/_MailLayout.cshtml";
+}
+
+<form asp-action="Index" method="post" enctype="multipart/form-data">
+    <div class="max-w-3xl p-md">
+    <!-- Page Title -->
+    <div class="mb-md">
+        <h2 class="font-headline-lg text-headline-lg text-on-surface mb-2">Profil</h2>
+        <p class="font-body-md text-body-md text-on-surface-variant">Kişisel bilgilerinizi ve hesap tercihlerinizi yönetin.</p>
+    </div>
+    <!-- Profile Management Section -->
+    <div class="flex flex-col gap-lg">
+        <!-- Avatar Section -->
+        <div class="flex items-start gap-md">
+            <div class="relative group cursor-pointer">
+                <div class="w-28 h-28 rounded-full bg-surface-container-high border-4 border-surface-container-lowest shadow-[0px_4px_20px_rgba(61,74,107,0.04)] flex items-center justify-center overflow-hidden">
+                    @if (!string.IsNullOrEmpty(Model.ExistingProfileImageUrl))
+{
+    <img src="@Model.ExistingProfileImageUrl" class="w-full h-full object-cover" alt="Profil" />
+}
+else
+{
+                    <span class="material-symbols-outlined text-[64px] text-outline-variant group-hover:opacity-0 transition-opacity duration-300" data-icon="person">person</span>
+}
+                    <div class="absolute inset-0 bg-inverse-surface/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                        <span class="material-symbols-outlined text-on-error text-[32px]" data-icon="photo_camera">photo_camera</span>
+                    </div>
+                </div>
+            </div>
+            <div class="pt-sm">
+                <h3 class="font-headline-md text-headline-md text-on-surface mb-xs">Profil Fotoğrafı</h3>
+                <p class="font-body-md text-body-md text-on-surface-variant mb-md max-w-sm">Daha iyi bir tanınabilirlik için yüzünüzün net göründüğü bir fotoğraf yükleyin.</p>
+                    <label asp-for="ProfileImage" class="text-primary-container font-label-md text-label-md hover:text-primary transition-colors hover:underline underline-offset-4 decoration-primary/30 cursor-pointer">Fotoğraf seç</label>
+                <input class="text-primary-container font-label-md text-label-md hover:text-primary transition-colors hover:underline underline-offset-4 decoration-primary/30 cursor-pointer" asp-for="ProfileImage" type="file" accept="image/*" />
+                   
+            </div>
+        </div>
+        <!-- Form Divider -->
+        <div class="w-full h-px bg-surface-container-highest"></div>
+        <!-- Personal Info Form -->
+        <div class="flex flex-col gap-md max-w-xl">
+            <div class="grid grid-cols-2 gap-md">
+                <!-- First Name Input -->
+                <div class="flex flex-col gap-xs">
+                    <label class="font-label-md text-label-md text-secondary" asp-for="FirstName">Ad</label>
+                    <input class="w-full bg-surface-container-lowest border border-outline-variant rounded-lg px-md py-sm font-body-md text-body-md text-on-surface focus:outline-none focus:border-primary-container focus:ring-1 focus:ring-primary-container transition-colors shadow-sm" type="text" asp-for="FirstName" />
+                </div>
+                <!-- Last Name Input -->
+                <div class="flex flex-col gap-xs">
+                    <label class="font-label-md text-label-md text-secondary" asp-for="LastName">Soyad</label>
+                    <input class="w-full bg-surface-container-lowest border border-outline-variant rounded-lg px-md py-sm font-body-md text-body-md text-on-surface focus:outline-none focus:border-primary-container focus:ring-1 focus:ring-primary-container transition-colors shadow-sm"  type="text" asp-for="LastName" />
+                </div>
+            </div>
+            <!-- Email Input (Read-only) -->
+            <div class="flex flex-col gap-xs">
+                <label class="font-label-md text-label-md text-secondary" asp-for="Email">E-posta</label>
+                <div class="relative">
+                    <input class="w-full bg-surface-container-low border border-surface-container-highest rounded-lg px-md py-sm pl-xl font-body-md text-body-md text-on-surface-variant cursor-not-allowed shadow-sm" asp-for="Email" readonly="" type="email" />
+                    <span class="material-symbols-outlined absolute left-sm top-1/2 -translate-y-1/2 text-outline-variant text-[20px]" data-icon="lock">lock</span>
+                </div>
+                <p class="font-code-sm text-code-sm text-outline mt-1">Kurumsal e-posta adresleri sistem yöneticisi tarafından değiştirilebilir.</p>
+            </div>
+        </div>
+        <!-- Form Divider -->
+        <div class="w-full h-px bg-surface-container-highest"></div>
+        <!-- Action Area -->
+        <div class="pt-sm">
+            <button class="bg-primary-container text-on-primary font-label-md text-label-md px-xl py-sm rounded-lg hover:bg-surface-tint transition-colors shadow-sm flex items-center justify-center" type="submit">
+                Kaydet
+            </button>
+        </div>
+    </div>
+</div>
+</form>

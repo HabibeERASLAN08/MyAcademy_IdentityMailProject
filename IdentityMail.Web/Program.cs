@@ -28,9 +28,10 @@ builder.Services.AddDbContext<AppDbContext>(options=>
 builder.Services.AddIdentity<AppUser, AppRole>(options =>
     {
         options.User.RequireUniqueEmail = true;
-       
+
     }).AddEntityFrameworkStores<AppDbContext>()
-    .AddErrorDescriber<CustomErrorDescriber>();
+    .AddErrorDescriber<CustomErrorDescriber>()
+    .AddDefaultTokenProviders();
 
 builder.Services.ConfigureApplicationCookie(config =>
 {

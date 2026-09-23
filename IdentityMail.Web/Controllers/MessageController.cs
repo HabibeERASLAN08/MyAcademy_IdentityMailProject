@@ -18,7 +18,7 @@ namespace IdentityMail.Web.Controllers
 
             ViewBag.fullName=user.FirstName + "" + user.LastName;   
 
-            var messages=await _context.UserMessages.Include(X=>X.Sender).Where(x=>x.ReceiverId==user.Id).ToListAsync();
+            var messages=await _context.UserMessages.Include(X=>X.Sender).Where(x=>x.ReceiverId==user.Id &&!x.IsDraft &&!x.IsDeletedByReceiver).ToListAsync();
 
             return View(messages);
         }
@@ -59,10 +59,47 @@ namespace IdentityMail.Web.Controllers
 
         public async Task<IActionResult> MailDetail(int id)
         {
-            var message=await _context.UserMessages.Include(x=>x.Sender).FirstOrDefaultAsync(x=>
-            x.Id==id);
-
+            var user = await _userManager.FindByNameAsync(User.Identity.Name);
+            var message = await _context.UserMessages
+                .Include(x => x.Sender)
+                .Include(x=> x.Receiver)
+                .FirstOrDefaultAsync(x => x.Id == id);
+            if (user == null || message == null || message.ReceiverId != user.Id)
+            {
+                return RedirectToAction("Index");
+            }
+            if (!message.IsRead)
+            {
+                message.IsRead = true;
+                await _context.SaveChangesAsync();
+            }
             return View(message);
+        }
+
+        public async Task<IActionResult> ToggleImportant(int id)
+        {
+            var user = await _userManager.FindByNameAsync(User.Identity.Name);
+            var message=await _context.UserMessages.FirstOrDefaultAsync(x => x.Id == id && x.ReceiverId==user.Id);
+            if(user==null || message == null)
+            {
+                return RedirectToAction("Index");
+            }
+            message.IsImportant = !message.IsImportant;
+            await _context.SaveChangesAsync();
+            return RedirectToAction("MailDetail",new { id=message.Id });
+        }
+
+        public async Task<IActionResult> MoveToTrash(int id)
+        {
+            var user = await _userManager.FindByNameAsync(User.Identity.Name);
+            var message = await _context.UserMessages.FirstOrDefaultAsync(x => x.Id == id && x.ReceiverId == user.Id);
+            if (user == null || message == null)
+            {
+                return RedirectToAction("Index");
+            }
+            message.IsDeletedByReceiver = true;
+            await _context.SaveChangesAsync();
+            return RedirectToAction("Index");
         }
 
     }

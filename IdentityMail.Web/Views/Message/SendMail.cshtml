@@ -2,25 +2,69 @@
 @model SendMailDto
 
 @{
-    ViewData["Title"] = "SendMail";
+    Layout = "_MailLayout";
+    ViewData["Title"] = "Yeni Mesaj";
 }
 
-<h1>Yeni Mail Gönder</h1>
-
-<form method="post">
-    <label>Alıcı Mail</label>
-    <input type="email" asp-for="ReceiverMail" class="form-control" required />
-    <br />
-    <label>Konu</label>
-    <input type="text" asp-for="Subject" class="form-control" required />
-    <br />
-    <label>Mail İçeriği</label>
-    <textarea type="password" asp-for="Body" class="form-control" required rows="10">
-    </textarea>
-    <br />
-
-    <span class="text-danger">@Html.ValidationSummary()</span>
-
-    <button class="btn btn-outline-dark">Gönder</button>
+<form asp-action="SendMail" method="post">
+<div class="absolute bottom-md right-lg w-[560px] h-[520px] bg-surface-container-lowest rounded-[12px] border border-[#EDE4E8] compose-shadow flex flex-col z-30 overflow-hidden transform transition-transform duration-300 translate-y-0 opacity-100">
+    <!-- Header -->
+    <div class="bg-surface-container-low px-md py-sm flex justify-between items-center border-b border-[#EDE4E8]">
+        <h3 class="font-label-md text-label-md text-on-surface">Yeni Mesaj</h3>
+        <div class="flex gap-sm text-outline-variant">
+            <button type="button" class="hover:text-on-surface transition-colors rounded hover:bg-surface-container p-0.5 flex items-center justify-center">
+                <span class="material-symbols-outlined text-[18px]">minimize</span>
+            </button>
+                <button type="button" class="hover:text-on-surface transition-colors rounded hover:bg-surface-container p-0.5 flex items-center justify-center">
+                <span class="material-symbols-outlined text-[18px]">open_in_full</span>
+            </button>
+                <button type="button" class="hover:text-error transition-colors rounded hover:bg-error-container p-0.5 flex items-center justify-center">
+                <span class="material-symbols-outlined text-[18px]">close</span>
+            </button>
+        </div>
+    </div>
+    <!-- Form Fields -->
+    <div class="px-md py-xs border-b border-[#EDE4E8] flex items-center">
+        <label class="font-label-md text-label-md text-outline w-12 shrink-0" asp-for="ReceiverMail">Alıcı</label>
+            <input class="flex-1 bg-transparent border-none focus:ring-0 text-body-md font-body-md text-on-surface placeholder:text-outline-variant py-sm" placeholder="" asp-for="ReceiverMail" type="email" />
+    </div>
+    <div class="px-md py-xs border-b border-[#EDE4E8] flex items-center">
+        <label class="font-label-md text-label-md text-outline w-12 shrink-0" asp-for="Subject">Konu</label>
+        <input class="flex-1 bg-transparent border-none focus:ring-0 text-body-md font-body-md text-on-surface placeholder:text-outline-variant py-sm" asp-for="Subject" placeholder="" type="text" />
+    </div>
+    <!-- Rich Text Area -->
+    <div class="flex-1 p-md bg-surface-container-lowest cursor-text relative overflow-y-auto">
+            <textarea asp-for="Body" class="w-full h-full bg-transparent border-none focus:ring-0 text-body-md font-body-md text-on-surface resize-none" placeholder="Mesajınızı buraya yazın"></textarea>
+    </div>
+    <!-- Bottom Toolbar -->
+    <div class="px-md py-sm bg-surface-container-low border-t border-[#EDE4E8] flex justify-between items-center">
+        <div class="flex items-center gap-sm">
+                <button type="submit" class="bg-primary-container hover:bg-surface-tint text-on-primary font-label-md text-label-md px-lg py-[10px] rounded-[12px] transition-colors flex items-center gap-xs">
+                Gönder
+                <span class="material-symbols-outlined text-[16px]">arrow_drop_down</span>
+            </button>
+            <div class="w-px h-6 bg-[#EDE4E8] mx-xs"></div>
+                <button type="button" class="text-outline hover:text-on-surface transition-colors p-xs rounded-full hover:bg-surface-container-highest flex items-center justify-center">
+                <span class="material-symbols-outlined text-[20px]">format_bold</span>
+            </button>
+                <button type="button" class="text-outline hover:text-on-surface transition-colors p-xs rounded-full hover:bg-surface-container-highest flex items-center justify-center">
+                <span class="material-symbols-outlined text-[20px]">format_italic</span>
+            </button>
+                <button type="button" class="text-outline hover:text-on-surface transition-colors p-xs rounded-full hover:bg-surface-container-highest flex items-center justify-center">
+                <span class="material-symbols-outlined text-[20px]">format_underlined</span>
+            </button>
+            <div class="w-px h-6 bg-[#EDE4E8] mx-xs"></div>
+                <button type="button" class="text-outline hover:text-on-surface transition-colors p-xs rounded-full hover:bg-surface-container-highest flex items-center justify-center">
+                <span class="material-symbols-outlined text-[20px]">attach_file</span>
+            </button>
+                <button type="button" class="text-outline hover:text-on-surface transition-colors p-xs rounded-full hover:bg-surface-container-highest flex items-center justify-center">
+                <span class="material-symbols-outlined text-[20px]">link</span>
+            </button>
+        </div>
+        <button type="button" class="text-outline hover:text-error transition-colors p-xs rounded-full hover:bg-error-container flex items-center justify-center">
+            <span class="material-symbols-outlined text-[20px]">delete</span>
+        </button>
+    </div>
+</div>
+    <div asp-validation-summary="All" class="text-error px-md"></div>
 </form>
-

@@ -1,0 +1,364 @@
+﻿@using  Microsoft.AspNetCore.Identity
+@using Microsoft.EntityFrameworkCore
+@using IdentityMail.Web.Context
+@inject UserManager<AppUser> UserManager
+@inject AppDbContext context
+
+@{
+    var currentUser = await UserManager.GetUserAsync(User);
+    var initials = "";
+    var inboxUnread = 0;
+    var draftCount = 0;
+    if(currentUser!=null)
+    {
+        if(!string.IsNullOrEmpty(currentUser.FirstName))
+        {
+            initials+= currentUser.FirstName[0];
+        }
+        if(!string.IsNullOrEmpty(currentUser.LastName))
+        {
+            initials += currentUser.LastName[0];
+        }
+        initials = initials.ToUpper();
+        inboxUnread = await context.UserMessages.CountAsync(x => x.ReceiverId == currentUser.Id && !x.IsRead && !x.IsDraft && !x.IsDeletedByReceiver);
+        draftCount = await context.UserMessages.CountAsync(x => x.SenderId == currentUser.Id && x.IsDraft);
+    }
+}
+<!DOCTYPE html>
+<html class="light" lang="tr">
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>@ViewData["Title"] - HMail</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet" />
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "outline-variant": "#d2c2c9",
+                        "surface-container-high": "#f7e3e8",
+                        "inverse-on-surface": "#ffecf1",
+                        "surface-variant": "#f1dee3",
+                        "tertiary-container": "#7f653a",
+                        "secondary": "#515e80",
+                        "on-primary": "#ffffff",
+                        "on-background": "#23191c",
+                        "secondary-container": "#c9d6ff",
+                        "outline": "#81737a",
+                        "on-secondary": "#ffffff",
+                        "primary": "#704261",
+                        "inverse-primary": "#f0b5d9",
+                        "surface-container-lowest": "#ffffff",
+                        "on-surface": "#23191c",
+                        "surface-container-low": "#fff0f3",
+                        "on-tertiary": "#ffffff",
+                        "tertiary": "#654d24",
+                        "tertiary-fixed": "#ffdeab",
+                        "on-secondary-container": "#505d7f",
+                        "surface-dim": "#e9d5da",
+                        "on-secondary-fixed": "#0c1a39",
+                        "tertiary-fixed-dim": "#e3c28e",
+                        "surface-bright": "#fff8f8",
+                        "surface-container-highest": "#f1dee3",
+                        "secondary-fixed-dim": "#b9c6ed",
+                        "secondary-fixed": "#d9e2ff",
+                        "on-tertiary-container": "#ffe6c3",
+                        "on-error": "#ffffff",
+                        "on-surface-variant": "#4f444a",
+                        "surface-tint": "#7f4f6f",
+                        "primary-fixed": "#ffd8ee",
+                        "inverse-surface": "#392d31",
+                        "error": "#ba1a1a",
+                        "surface": "#fff8f8",
+                        "on-tertiary-fixed-variant": "#59431b",
+                        "primary-fixed-dim": "#f0b5d9",
+                        "error-container": "#ffdad6",
+                        "background": "#fff8f8",
+                        "on-primary-fixed": "#320d29",
+                        "on-secondary-fixed-variant": "#394667",
+                        "primary-container": "#8b5a7a",
+                        "on-tertiary-fixed": "#271900",
+                        "on-primary-container": "#ffe3f1",
+                        "on-error-container": "#93000a",
+                        "on-primary-fixed-variant": "#643856",
+                        "surface-container": "#fde9ee"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "auth-width": "420px",
+                        "md": "24px",
+                        "xl": "80px",
+                        "lg": "48px",
+                        "xs": "4px",
+                        "sm": "12px",
+                        "container-max": "1200px",
+                        "base": "8px"
+                    },
+                    "fontFamily": {
+                        "body-lg": ["Inter"],
+                        "display": ["Inter"],
+                        "body-md": ["Inter"],
+                        "headline-lg": ["Inter"],
+                        "headline-lg-mobile": ["Inter"],
+                        "label-md": ["Inter"],
+                        "code-sm": ["monospace"],
+                        "headline-md": ["Inter"]
+                    },
+                    "fontSize": {
+                        "body-lg": ["18px", { "lineHeight": "1.6", "fontWeight": "400" }],
+                        "display": ["48px", { "lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "600" }],
+                        "body-md": ["16px", { "lineHeight": "1.5", "fontWeight": "400" }],
+                        "headline-lg": ["32px", { "lineHeight": "1.2", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+                        "headline-lg-mobile": ["24px", { "lineHeight": "1.2", "fontWeight": "600" }],
+                        "label-md": ["14px", { "lineHeight": "1", "letterSpacing": "0.01em", "fontWeight": "500" }],
+                        "code-sm": ["13px", { "lineHeight": "1.4", "fontWeight": "400" }],
+                        "headline-md": ["20px", { "lineHeight": "1.4", "fontWeight": "500" }]
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-surface font-body-md text-on-surface h-screen flex flex-row overflow-hidden">
+    <aside class="bg-surface w-60 h-screen shrink-0 border-r border-outline-variant flex flex-col p-md gap-sm overflow-y-auto">
+        <div class="flex items-center gap-sm mb-lg">
+            <div class="w-10 h-10 rounded-lg bg-primary-container flex items-center justify-center text-on-primary font-bold shadow-sm">
+                <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">mail</span>
+            </div>
+            <div>
+                <h1 class="font-display text-[24px] text-secondary leading-tight tracking-tight">HMail</h1>
+                <p class="font-label-md text-[12px] text-on-surface-variant">Modern Email</p>
+            </div>
+        </div>
+        <button type="button" id="composeOpen" class="w-full bg-primary-container text-on-primary h-12 rounded-[12px] flex items-center justify-center gap-sm font-label-md font-bold hover:bg-surface-tint transition-colors mb-md" >
+            <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">edit</span>
+            Yeni Mesaj
+        </button>
+        <nav class="flex-1 flex flex-col gap-xs">
+            <a class="flex items-center justify-between px-sm py-3 text-primary font-bold bg-surface-container rounded-lg group cursor-pointer transition-colors duration-200" asp-controller="Message" asp-action="Index">
+                <div class="flex items-center gap-sm">
+                    <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">inbox</span>
+                    <span class="font-label-md">Gelen Kutusu</span>
+                </div>
+                <span class="font-label-md">@inboxUnread</span>
+            </a>
+            <a class="flex items-center justify-between px-sm py-3 text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low rounded-lg transition-colors duration-200" href="#">
+                <div class="flex items-center gap-sm">
+                    <span class="material-symbols-outlined">send</span>
+                    <span class="font-label-md">Gönderilenler</span>
+                </div>
+            </a>
+            <a class="flex items-center justify-between px-sm py-3 text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low rounded-lg transition-colors duration-200" href="#">
+                <div class="flex items-center gap-sm">
+                    <span class="material-symbols-outlined">draft</span>
+                    <span class="font-label-md">Taslaklar</span>
+                </div>
+                <span class="font-label-md">@draftCount</span>
+            </a>
+            <a class="flex items-center justify-between px-sm py-3 text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low rounded-lg transition-colors duration-200" href="#">
+                <div class="flex items-center gap-sm">
+                    <span class="material-symbols-outlined">star</span>
+                    <span class="font-label-md">Yıldızlı</span>
+                </div>
+            </a>
+            <a class="flex items-center justify-between px-sm py-3 text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low rounded-lg transition-colors duration-200 mb-md" href="#">
+                <div class="flex items-center gap-sm">
+                    <span class="material-symbols-outlined">delete</span>
+                    <span class="font-label-md">Çöp Kutusu</span>
+                </div>
+            </a>
+            <div class="mt-md">
+                <div class="px-sm py-2 flex items-center justify-between group">
+                    <h3 class="font-label-md text-on-surface-variant uppercase tracking-wider text-[11px] font-bold">Kategoriler</h3>
+                    <button class="opacity-0 group-hover:opacity-100 transition-opacity text-on-surface-variant"><span class="material-symbols-outlined text-[18px]">add</span></button>
+                </div>
+                <a class="flex items-center gap-sm px-sm py-2 text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low rounded-lg transition-colors duration-200" href="#">
+                    <span class="material-symbols-outlined text-[18px] text-[#4285F4]" style="font-variation-settings: 'FILL' 1;">label</span>
+                    <span class="font-label-md">İş</span>
+                </a>
+                <a class="flex items-center gap-sm px-sm py-2 text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low rounded-lg transition-colors duration-200" href="#">
+                    <span class="material-symbols-outlined text-[18px] text-[#34A853]" style="font-variation-settings: 'FILL' 1;">label</span>
+                    <span class="font-label-md">Kişisel</span>
+                </a>
+            </div>
+        </nav>
+    </aside>
+
+    <div class="flex flex-col flex-1 min-w-0 overflow-hidden">
+        <header class="relative bg-surface h-16 w-full shrink-0 border-b border-outline-variant flex justify-between items-center px-lg">
+            <div class="flex-1 max-w-2xl px-md">
+                <div class="relative flex items-center w-full focus-within:ring-2 focus-within:ring-primary rounded-lg bg-surface-container-lowest border border-outline-variant transition-colors duration-200">
+                    <span class="material-symbols-outlined absolute left-sm text-on-surface-variant">search</span>
+                    <input class="w-full h-12 pl-10 pr-4 bg-transparent border-none focus:ring-0 text-on-surface font-body-md placeholder-on-surface-variant rounded-lg" placeholder="Maillerde ara" type="text" />
+                    <button class="absolute right-sm p-1 rounded-full hover:bg-surface-container-low transition-colors text-on-surface-variant" type="button">
+                        <span class="material-symbols-outlined">tune</span>
+                    </button>
+                </div>
+            </div>
+            <div class="flex items-center gap-sm">
+                <button class="p-2 rounded-full hover:bg-surface-container-low text-on-surface-variant transition-colors" type="button">
+                    <span class="material-symbols-outlined">help</span>
+                </button>
+                <button class="p-2 rounded-full hover:bg-surface-container-low text-on-surface-variant transition-colors" type="button">
+                    <span class="material-symbols-outlined">settings</span>
+                </button>
+                <button class="p-2 rounded-full hover:bg-surface-container-low text-on-surface-variant transition-colors mr-xs" type="button">
+                    <span class="material-symbols-outlined">apps</span>
+                </button>
+                <div id="profileBtn" class="h-10 w-10 rounded-full bg-primary-container text-on-primary flex items-center justify-center font-label-md font-bold cursor-pointer hover:opacity-90 transition-opacity ring-2 ring-primary opacity-90 overflow-hidden">
+                    @if (currentUser != null && !string.IsNullOrEmpty(currentUser.ProfileImageUrl))
+                    {
+                        <img src="@currentUser.ProfileImageUrl" alt="Profil" class="w-full h-full object-cover" />
+                    }
+                    else
+                    {
+                        @initials
+                    }
+                </div>
+                <div id="profileMenu" class="hidden absolute right-lg top-16 mt-2 bg-surface-container-lowest rounded-lg shadow-lg border border-outline-variant z-30 overflow-hidden w-[320px]">
+                    <div class="p-md border-b border-outline-variant">
+                        <p class="text-on-surface-variant text-[18px] font-bold mb-1">Merhaba @currentUser.FirstName</p>
+                        <p class="text-on-surface text-[14px] truncate">@currentUser.Email</p>
+                    </div>
+                    <div class="py-3">
+                        <a class="flex items-center gap-md px-md py-4 hover:bg-surface-container-low text-on-surface transition-colors" asp-controller="Profile" asp-action="Index">
+                            <span class="material-symbols-outlined text-[24px]">account_circle</span>
+                            <span class="font-body-md font-medium">Profil</span>
+                        </a>
+                        <a class="flex items-center gap-md px-md py-4 hover:bg-surface-container-low text-on-surface transition-colors" asp-controller="Profile" asp-action="ChangePassword">
+                            <span class="material-symbols-outlined text-[24px]">lock</span>
+                            <span class="font-body-md font-medium">Şifre değiştir</span>
+                        </a>
+                        <div class="h-[1px] bg-outline-variant my-2"></div>
+                        <a class="flex items-center gap-md px-md py-4 hover:bg-surface-container-low text-error transition-colors" asp-controller="Auth" asp-action="Logout">
+                            <span class="material-symbols-outlined text-[24px]">logout</span>
+                            <span class="font-body-md font-medium">Çıkış</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </header>
+        <main class="flex-1 bg-surface-container-lowest flex flex-col overflow-y-auto rounded-tl-xl border-l border-t border-outline-variant shadow-[0px_4px_20px_rgba(61,74,107,0.04)] m-2 mt-0 ml-0 relative">
+            @RenderBody()
+        </main>
+        <div id="composePanel" class="hidden shrink-0 fixed bottom-md right-lg w-[560px] h-[520px] bg-surface-container-lowest rounded-[12px] border border-[#EDE4E8] compose-shadow flex flex-col z-30 overflow-hidden transform transition-transform duration-300 translate-y-0 opacity-100" style="position: fixed; right: 24px; bottom: 24px; width: 560px; height: 520px; z-index: 50;">
+                <!-- Header -->
+            <form asp-action="SendMail" asp-controller="Message" method="post" class="flex flex-col h-full">
+
+                <div class="bg-surface-container-low px-md py-sm flex justify-between items-center border-b border-[#EDE4E8]">
+                    <h3 class="font-label-md text-label-md text-on-surface">Yeni Mesaj</h3>
+      
+
+     
+                    <div class="flex gap-sm text-outline-variant">
+                        <button type="button" class="hover:text-on-surface transition-colors rounded hover:bg-surface-container p-0.5 flex items-center justify-center">
+                            <span class="material-symbols-outlined text-[18px]">minimize</span>
+                        </button>
+                        <button id="composeMaximize" type="button" class="hover:text-on-surface transition-colors rounded hover:bg-surface-container p-0.5 flex items-center justify-center">
+                            <span class="material-symbols-outlined text-[18px]">open_in_full</span>
+                        </button>
+                        <button type="button" id="composeClose" class="hover:text-error transition-colors rounded hover:bg-error-container p-0.5 flex items-center justify-center">
+                            <span class="material-symbols-outlined text-[18px]">close</span>
+                        </button>
+                    </div>
+                </div>
+            
+                <!-- Form Fields -->
+                <div class="px-md py-xs border-b border-[#EDE4E8] flex items-center">
+                    <label class="font-label-md text-label-md text-outline w-12 shrink-0" >Alıcı</label>
+                    <input class="flex-1 bg-transparent border-none focus:ring-0 text-body-md font-body-md text-on-surface placeholder:text-outline-variant py-sm" placeholder="" name="ReceiverMail" type="email" />
+                </div>
+                <div class="px-md py-xs border-b border-[#EDE4E8] flex items-center">
+                    <label class="font-label-md text-label-md text-outline w-12 shrink-0" >Konu</label>
+                    <input class="flex-1 bg-transparent border-none focus:ring-0 text-body-md font-body-md text-on-surface placeholder:text-outline-variant py-sm" name="Subject" placeholder="" type="text" />
+                </div>
+                <!-- Rich Text Area -->
+                <div class="flex-1 p-md bg-surface-container-lowest cursor-text relative overflow-y-auto">
+                    <textarea name="Body" class="w-full h-full bg-transparent border-none focus:ring-0 text-body-md font-body-md text-on-surface resize-none" placeholder="Mesajınızı buraya yazın"></textarea>
+                </div>
+                <!-- Bottom Toolbar -->
+                <div class="px-md py-sm bg-surface-container-low border-t border-[#EDE4E8] flex justify-between items-center">
+                    <div class="flex items-center gap-sm">
+                        <button type="submit" class="bg-primary-container hover:bg-surface-tint text-on-primary font-label-md text-label-md px-lg py-[10px] rounded-[12px] transition-colors flex items-center gap-xs">
+                            Gönder
+                            <span class="material-symbols-outlined text-[16px]">arrow_drop_down</span>
+                        </button>
+                        <div class="w-px h-6 bg-[#EDE4E8] mx-xs"></div>
+                        <button type="button" class="text-outline hover:text-on-surface transition-colors p-xs rounded-full hover:bg-surface-container-highest flex items-center justify-center">
+                            <span class="material-symbols-outlined text-[20px]">format_bold</span>
+                        </button>
+                        <button type="button" class="text-outline hover:text-on-surface transition-colors p-xs rounded-full hover:bg-surface-container-highest flex items-center justify-center">
+                            <span class="material-symbols-outlined text-[20px]">format_italic</span>
+                        </button>
+                        <button type="button" class="text-outline hover:text-on-surface transition-colors p-xs rounded-full hover:bg-surface-container-highest flex items-center justify-center">
+                            <span class="material-symbols-outlined text-[20px]">format_underlined</span>
+                        </button>
+                        <div class="w-px h-6 bg-[#EDE4E8] mx-xs"></div>
+                        <button type="button" class="text-outline hover:text-on-surface transition-colors p-xs rounded-full hover:bg-surface-container-highest flex items-center justify-center">
+                            <span class="material-symbols-outlined text-[20px]">attach_file</span>
+                        </button>
+                        <button type="button" class="text-outline hover:text-on-surface transition-colors p-xs rounded-full hover:bg-surface-container-highest flex items-center justify-center">
+                            <span class="material-symbols-outlined text-[20px]">link</span>
+                        </button>
+                    </div>
+                    <button type="button" class="text-outline hover:text-error transition-colors p-xs rounded-full hover:bg-error-container flex items-center justify-center">
+                        <span class="material-symbols-outlined text-[20px]">delete</span>
+                    </button>
+                </div>
+           
+            <div asp-validation-summary="All" class="text-error px-md"></div>
+        </form>
+        </div>
+        </div>
+    <script>
+        const btn = document.getElementById("profileBtn");
+        const menu = document.getElementById("profileMenu");
+        btn.addEventListener("click", function (e) {
+            e.stopPropagation();
+            menu.classList.toggle("hidden");
+        });
+        document.addEventListener("click", function () {
+            menu.classList.add("hidden");
+        });
+
+        const composeOpen=document.getElementById("composeOpen");
+        const composePanel=document.getElementById("composePanel");
+        if(sessionStorage.getItem("hmailCompose")==="1"){
+            composePanel.classList.remove("hidden");
+        }
+        composeOpen.addEventListener("click",function(){
+            document.querySelector("[name=ReceiverMail]").value = "";
+            document.querySelector("[name=Subject]").value = "";
+            document.querySelector("[name=Body]").value = "";
+            composePanel.classList.remove("hidden");
+            sessionStorage.setItem("hmailCompose","1");
+        });
+        document.getElementById("composeClose").addEventListener("click",function(){
+            composePanel.classList.add("hidden");
+            sessionStorage.removeItem("hmailCompose");
+        });
+                document.getElementById("composeMaximize").addEventListener("click", function () {
+            if (composePanel.style.width === "560px" || composePanel.style.width === "") {
+                composePanel.style.width = "calc(100vw - 400px)";
+                composePanel.style.height = "calc(100vh - 120px)";
+                composePanel.style.right = "32px";
+                composePanel.style.bottom = "32px";
+            } else {
+                composePanel.style.width = "560px";
+                composePanel.style.height = "520px";
+                composePanel.style.right = "24px";
+                composePanel.style.bottom = "24px";
+            }
+        });
+    </script>
+</body>
+</html>

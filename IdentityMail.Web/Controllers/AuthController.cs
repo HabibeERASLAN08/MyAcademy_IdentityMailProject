@@ -74,6 +74,69 @@ namespace IdentityMail.Web.Controllers
             }
             return RedirectToAction("Index", "Message");
         }
+        public IActionResult ForgotPassword()
+        {
+            return View();
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> ForgotPassword(ForgotPasswordDto forgotPasswordDto)
+        {
+            var user = await _userManager.FindByEmailAsync(forgotPasswordDto.Email);
+            if (user == null)
+            {
+                ModelState.AddModelError(string.Empty, "Bu e-posta sistemde kayıtlı değil.");
+                return View(forgotPasswordDto);
+            }
+            var token = await _userManager.GeneratePasswordResetTokenAsync(user);
+            return RedirectToAction("ResetPassword", new { userId = user.Id, token });
+        }
+
+        public IActionResult ResetPassword(string userId, string token)
+        {
+            if(string.IsNullOrEmpty(userId) || string.IsNullOrEmpty(token))
+            {
+                return RedirectToAction("Login");
+            }
+            var model = new ResetPasswordDto
+            {
+                UserId = userId,
+                Token = token
+            };
+            return View(model);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> ResetPassword(ResetPasswordDto resetPasswordDto)
+        {
+            if(resetPasswordDto.NewPassword!=resetPasswordDto.ConfirmPassword)
+            {
+                ModelState.AddModelError(string.Empty, "Şifreler birbiriyle uyumlu değil.");
+                return View(resetPasswordDto);
+            }
+
+            var user=await _userManager.FindByIdAsync(resetPasswordDto.UserId);
+            if (user == null)
+            {
+                ModelState.AddModelError(string.Empty, "Kullanıcı bulunamadı.");
+                return View(resetPasswordDto);
+            }
+            var result = await _userManager.ResetPasswordAsync(
+                user,
+                resetPasswordDto.Token,
+                resetPasswordDto.NewPassword);
+
+            if (!result.Succeeded)
+            {
+                foreach(var error in result.Errors)
+                {
+                    ModelState.AddModelError(string.Empty,error.Description);
+                }
+                return View(resetPasswordDto);
+            }
+            ViewBag.SuccessMessage = "Şifreniz güncellendi. Yeni şifrenizle giriş yapabilirsiniz.";
+            return View(resetPasswordDto);
+        }
 
         public async Task<IActionResult> LogOut()
         {

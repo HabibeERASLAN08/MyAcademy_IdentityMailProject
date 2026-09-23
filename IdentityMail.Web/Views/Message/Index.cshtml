@@ -1,36 +1,51 @@
-﻿
-@model List<UserMessage>
+﻿@model List<UserMessage>
 
 @{
-    ViewData["Title"] = "Index";
+    Layout = "_MailLayout";
+    ViewData["Title"] = "Gelen Kutusu";
 }
 
-<h1>Merhaba, @ViewBag.fullName</h1>
 
-<a href="/Auth/Logout" class="btn btn-info">Çıkış Yap</a>
 
-<table class="table table-bordered table-hover">
-    <tr>
-        <th>Gönderen Ad Soyad</th>
-        <th>Email</th>
-        <th>Konu</th>
-        <th>Tarih</th>
-        <th>İşlemler</th>
-    </tr>
-
-    @foreach(var item in Model)
+<div class="h-14 border-b border-outline-variant flex items-center px-md justify-between bg-surface-container-lowest sticky top-0 z-10">
+    <div class="flex items-center gap-sm text-on-surface-variant">
+        <div class="flex items-center gap-xs">
+            <input class="w-4 h-4 rounded-[4px] border-outline-variant text-primary focus:ring-primary cursor-pointer rounded" type="checkbox" />
+            <button class="p-1 rounded hover:bg-surface-container-low"><span class="material-symbols-outlined text-[20px]">arrow_drop_down</span></button>
+        </div>
+        <button class="p-2 rounded-full hover:bg-surface-container-low transition-colors"><span class="material-symbols-outlined text-[20px]">refresh</span></button>
+        <button class="p-2 rounded-full hover:bg-surface-container-low transition-colors"><span class="material-symbols-outlined text-[20px]">more_vert</span></button>
+    </div>
+    <div class="flex items-center gap-sm text-on-surface-variant font-body-md text-[13px]">
+        <span>@Model.Count mesaj</span>
+        <div class="flex gap-1">
+            <button class="p-1 rounded-full hover:bg-surface-container-low transition-colors"><span class="material-symbols-outlined text-[20px]">chevron_left</span></button>
+            <button class="p-1 rounded-full hover:bg-surface-container-low transition-colors"><span class="material-symbols-outlined text-[20px]">chevron_right</span></button>
+        </div>
+    </div>
+</div>
+<!-- Email List -->
+<div class="flex-1 overflow-y-auto">
+    <!-- Unread Row -->
+    @foreach (var item in Model)
     {
-        <tr>
-            <td>@item.Sender.FirstName  @item.Sender.LastName</td>
-            <td>@item.Sender.Email</td>
-            <td>@item.Subject</td>
-            <td>@item.SendDate</td>
-            <td>
-                <a href="/Message/MailDetail/@item.Id" class="btn btn-outline-info">Mesajı Görüntüle</a>
-                <a href="#" class="btn btn-outline-danger">Sil</a>
-            </td>
-        </tr>
+        <a class="flex items-center px-md py-3 border-b border-outline-variant bg-surface-container-low hover:bg-surface-container-highest cursor-pointer transition-colors duration-200" asp-controller="Message" asp-action="MailDetail" asp-route-id="@item.Id">
+            <div class="flex items-center gap-md w-64 shrink-0">
+            <div class="flex items-center gap-sm text-on-surface-variant">
+                <span class="material-symbols-outlined text-primary text-[10px] mr-1" style="font-variation-settings: 'FILL' 1;">circle</span>
+                <input class="w-4 h-4 rounded-[4px] border-outline-variant text-primary focus:ring-primary cursor-pointer" type="checkbox" />
+                <button class="hover:text-on-surface transition-colors"><span class="material-symbols-outlined text-[20px]">star</span></button>
+            </div>
+            <span class="font-body-md font-bold text-on-surface truncate">@item.Sender.FirstName @item.Sender.LastName</span>
+        </div>
+        <div class="flex-1 min-w-0 pr-4 flex items-center gap-2">
+            <span class="font-body-md font-bold text-on-surface truncate">@item.Subject</span>
+            <span class="font-body-md text-on-surface-variant truncate">- @item.Body</span>
+        </div>
+        <div class="w-20 shrink-0 text-right">
+            <span class="font-body-md font-bold text-primary">@item.SendDate.ToString("dd.MM HH:mm")</span>
+        </div>
+        
+    </a>
     }
-</table>
-
-<a href="/Message/SendMail" class="btn btn-outline-dark">Yeni  Mail Gönder</a>
+</div>

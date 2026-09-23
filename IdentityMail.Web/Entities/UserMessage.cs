@@ -8,6 +8,10 @@
         public DateTime SendDate { get; set; }
         public bool IsRead { get; set; }
         public bool IsImportant { get; set; }
+        public bool IsDraft { get; set; }
+        public bool IsDeletedBySender { get; set; }
+        public bool IsDeletedByReceiver { get; set; }
+
         public AppUser Sender { get; set; }
         public int SenderId { get; set; }
         public AppUser Receiver { get; set; }
