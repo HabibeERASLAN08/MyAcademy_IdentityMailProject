@@ -151,7 +151,7 @@
                 </div>
                 <span class="font-label-md">@inboxUnread</span>
             </a>
-            <a class="flex items-center justify-between px-sm py-3 text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low rounded-lg transition-colors duration-200" href="#">
+            <a class="flex items-center justify-between px-sm py-3 text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low rounded-lg transition-colors duration-200" asp-controller="Message"  asp-action="Sent">
                 <div class="flex items-center gap-sm">
                     <span class="material-symbols-outlined">send</span>
                     <span class="font-label-md">Gönderilenler</span>
@@ -164,13 +164,13 @@
                 </div>
                 <span class="font-label-md">@draftCount</span>
             </a>
-            <a class="flex items-center justify-between px-sm py-3 text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low rounded-lg transition-colors duration-200" href="#">
+            <a class="flex items-center justify-between px-sm py-3 text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low rounded-lg transition-colors duration-200" asp-controller="Message" asp-action="Important">
                 <div class="flex items-center gap-sm">
                     <span class="material-symbols-outlined">star</span>
                     <span class="font-label-md">Yıldızlı</span>
                 </div>
             </a>
-            <a class="flex items-center justify-between px-sm py-3 text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low rounded-lg transition-colors duration-200 mb-md" href="#">
+            <a class="flex items-center justify-between px-sm py-3 text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low rounded-lg transition-colors duration-200 mb-md" asp-controller="Message" asp-action="Trash">
                 <div class="flex items-center gap-sm">
                     <span class="material-symbols-outlined">delete</span>
                     <span class="font-label-md">Çöp Kutusu</span>
@@ -328,7 +328,34 @@
         });
         document.addEventListener("click", function () {
             menu.classList.add("hidden");
+            var selectMenu = document.getElementById("selectMenu");
+            var moreMenu = document.getElementById("moreMenu");
+            if (selectMenu) selectMenu.classList.add("hidden");
+            if (moreMenu) moreMenu.classList.add("hidden");
         });
+
+        function setAllRowChecks(checked) {
+            document.querySelectorAll(".js-row-check").forEach(function (cb) { cb.checked = checked; });
+            var all = document.getElementById("selectAll");
+            if (all) all.checked = checked;
+        }
+        var selectAll = document.getElementById("selectAll");
+        if (selectAll) selectAll.addEventListener("change", function () { setAllRowChecks(selectAll.checked); });
+        var selectAllBtn = document.getElementById("selectAllBtn");
+        var selectNoneBtn = document.getElementById("selectNoneBtn");
+        if (selectAllBtn) selectAllBtn.addEventListener("click", function () { setAllRowChecks(true); });
+        if (selectNoneBtn) selectNoneBtn.addEventListener("click", function () { setAllRowChecks(false); });
+        function toggleListMenu(btnId, menuId) {
+            var toggleBtn = document.getElementById(btnId);
+            var toggleMenu = document.getElementById(menuId);
+            if (!toggleBtn || !toggleMenu) return;
+            toggleBtn.addEventListener("click", function (e) {
+                e.stopPropagation();
+                toggleMenu.classList.toggle("hidden");
+            });
+        }
+        toggleListMenu("selectMenuBtn", "selectMenu");
+        toggleListMenu("moreBtn", "moreMenu");
 
         const composeOpen=document.getElementById("composeOpen");
         const composePanel=document.getElementById("composePanel");

@@ -5,47 +5,60 @@
     ViewData["Title"] = "Gelen Kutusu";
 }
 
-
-
-<div class="h-14 border-b border-outline-variant flex items-center px-md justify-between bg-surface-container-lowest sticky top-0 z-10">
-    <div class="flex items-center gap-sm text-on-surface-variant">
-        <div class="flex items-center gap-xs">
-            <input class="w-4 h-4 rounded-[4px] border-outline-variant text-primary focus:ring-primary cursor-pointer rounded" type="checkbox" />
-            <button class="p-1 rounded hover:bg-surface-container-low"><span class="material-symbols-outlined text-[20px]">arrow_drop_down</span></button>
-        </div>
-        <button class="p-2 rounded-full hover:bg-surface-container-low transition-colors"><span class="material-symbols-outlined text-[20px]">refresh</span></button>
-        <button class="p-2 rounded-full hover:bg-surface-container-low transition-colors"><span class="material-symbols-outlined text-[20px]">more_vert</span></button>
-    </div>
-    <div class="flex items-center gap-sm text-on-surface-variant font-body-md text-[13px]">
-        <span>@Model.Count mesaj</span>
-        <div class="flex gap-1">
-            <button class="p-1 rounded-full hover:bg-surface-container-low transition-colors"><span class="material-symbols-outlined text-[20px]">chevron_left</span></button>
-            <button class="p-1 rounded-full hover:bg-surface-container-low transition-colors"><span class="material-symbols-outlined text-[20px]">chevron_right</span></button>
-        </div>
-    </div>
-</div>
-<!-- Email List -->
-<div class="flex-1 overflow-y-auto">
-    <!-- Unread Row -->
-    @foreach (var item in Model)
-    {
-        <a class="flex items-center px-md py-3 border-b border-outline-variant bg-surface-container-low hover:bg-surface-container-highest cursor-pointer transition-colors duration-200" asp-controller="Message" asp-action="MailDetail" asp-route-id="@item.Id">
-            <div class="flex items-center gap-md w-64 shrink-0">
-            <div class="flex items-center gap-sm text-on-surface-variant">
-                <span class="material-symbols-outlined text-primary text-[10px] mr-1" style="font-variation-settings: 'FILL' 1;">circle</span>
-                <input class="w-4 h-4 rounded-[4px] border-outline-variant text-primary focus:ring-primary cursor-pointer" type="checkbox" />
-                <button class="hover:text-on-surface transition-colors"><span class="material-symbols-outlined text-[20px]">star</span></button>
+<form asp-controller="Message" asp-action="MoveSelectedToTrash" method="post">
+    <input type="hidden" name="returnAction" value="Index" />
+    <div class="h-14 border-b border-outline-variant flex items-center px-md justify-between bg-surface-container-lowest sticky top-0 z-10">
+        <div class="flex items-center gap-sm text-on-surface-variant">
+            <div class="relative flex items-center gap-xs">
+                <input id="selectAll" class="w-4 h-4 rounded-[4px] border-outline-variant text-primary focus:ring-primary cursor-pointer rounded" type="checkbox" />
+                <button type="button" id="selectMenuBtn" class="p-1 rounded hover:bg-surface-container-low"><span class="material-symbols-outlined text-[20px]">arrow_drop_down</span></button>
+                <div id="selectMenu" class="hidden absolute left-0 top-10 z-20 w-44 bg-surface-container-lowest border border-outline-variant rounded-lg shadow-lg overflow-hidden">
+                    <button type="button" id="selectAllBtn" class="w-full text-left px-md py-sm font-body-md hover:bg-surface-container-low">Tümünü seç</button>
+                    <button type="button" id="selectNoneBtn" class="w-full text-left px-md py-sm font-body-md hover:bg-surface-container-low">Seçimi kaldır</button>
+                </div>
             </div>
-            <span class="font-body-md font-bold text-on-surface truncate">@item.Sender.FirstName @item.Sender.LastName</span>
+            <a asp-controller="Message" asp-action="Index" class="p-2 rounded-full hover:bg-surface-container-low transition-colors text-on-surface-variant">
+                <span class="material-symbols-outlined text-[20px]">refresh</span>
+            </a>
+            <div class="relative">
+                <button type="button" id="moreBtn" class="p-2 rounded-full hover:bg-surface-container-low transition-colors"><span class="material-symbols-outlined text-[20px]">more_vert</span></button>
+                <div id="moreMenu" class="hidden absolute left-0 top-10 z-20 w-44 bg-surface-container-lowest border border-outline-variant rounded-lg shadow-lg overflow-hidden">
+                    <button type="submit" class="w-full text-left px-md py-sm font-body-md hover:bg-surface-container-low">Çöpe taşı</button>
+                </div>
+            </div>
         </div>
-        <div class="flex-1 min-w-0 pr-4 flex items-center gap-2">
-            <span class="font-body-md font-bold text-on-surface truncate">@item.Subject</span>
-            <span class="font-body-md text-on-surface-variant truncate">- @item.Body</span>
+        <div class="flex items-center gap-sm text-on-surface-variant font-body-md text-[13px]">
+            <span>@Model.Count mesaj</span>
         </div>
-        <div class="w-20 shrink-0 text-right">
-            <span class="font-body-md font-bold text-primary">@item.SendDate.ToString("dd.MM HH:mm")</span>
-        </div>
-        
-    </a>
-    }
-</div>
+    </div>
+    <div class="flex-1 overflow-y-auto">
+        @foreach (var item in Model)
+        {
+            var nameClass = item.IsRead ? "font-body-md text-on-surface-variant truncate" : "font-body-md font-bold text-on-surface truncate";
+            <div class="flex items-center px-md py-3 border-b border-outline-variant @(item.IsRead ? "bg-surface-container-lowest" : "bg-surface-container-low") hover:bg-surface-container-highest transition-colors duration-200">
+                <div class="flex items-center gap-sm shrink-0 z-10 text-on-surface-variant">
+                    @if (!item.IsRead)
+                    {
+                        <span class="material-symbols-outlined text-primary text-[10px]" style="font-variation-settings: 'FILL' 1;">circle</span>
+                    }
+                    else
+                    {
+                        <span class="w-[10px]"></span>
+                    }
+                    <input name="ids" value="@item.Id" class="js-row-check w-4 h-4 rounded-[4px] border-outline-variant text-primary focus:ring-primary cursor-pointer" type="checkbox" onclick="event.stopPropagation();" />
+                    <a asp-controller="Message" asp-action="ToggleImportant" asp-route-id="@item.Id" asp-route-returnUrl="/Message/Index" class="p-1 @(item.IsImportant ? "text-primary" : "text-on-surface-variant")">
+                        <span class="material-symbols-outlined text-[22px]" style="font-variation-settings: 'FILL' @(item.IsImportant ? 1 : 0);">star</span>
+                    </a>
+                </div>
+                <a class="flex items-center flex-1 min-w-0 gap-2 ml-sm" asp-controller="Message" asp-action="MailDetail" asp-route-id="@item.Id">
+                    <span class="w-48 shrink-0 @nameClass">@item.Sender.FirstName @item.Sender.LastName</span>
+                    <span class="flex-1 min-w-0 flex items-center gap-2">
+                        <span class="@nameClass">@item.Subject</span>
+                        <span class="font-body-md text-on-surface-variant truncate">- @item.Body</span>
+                    </span>
+                    <span class="w-20 shrink-0 text-right @nameClass">@item.SendDate.ToString("dd.MM HH:mm")</span>
+                </a>
+            </div>
+        }
+    </div>
+</form>

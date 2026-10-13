@@ -7,22 +7,42 @@
 <!-- Top Toolbar -->
 <header class="h-[72px] flex items-center justify-between px-md border-b border-surface-container-highest bg-surface-container-lowest shrink-0">
     <div class="flex items-center gap-md">
-        <a asp-controller="Message" asp-action="Index" aria-label="Geri" class="p-xs rounded-full hover:bg-surface-container text-on-surface-variant transition-colors flex items-center justify-center">
+        <a asp-controller="Message" asp-action="@((string)(ViewBag.BackAction ?? "Index"))" aria-label="Geri" class="p-xs rounded-full hover:bg-surface-container text-on-surface-variant transition-colors flex items-center justify-center">
             <span class="material-symbols-outlined">arrow_back</span>
         </a>
         <div class="h-6 w-px bg-outline-variant"></div>
         <div class="flex items-center gap-sm">
-            <a asp-controller="Message" asp-action="ToggleImportant" asp-route-id="@Model.Id" aria-label="Yıldız" class="p-xs rounded-lg hover:bg-surface-container text-on-surface-variant transition-colors flex items-center justify-center">
-                <span class="material-symbols-outlined @(Model.IsImportant ? "text-primary" : "")" style="font-variation-settings: 'FILL' @(Model.IsImportant ? 1 : 0);">star</span>
-            </a>
-            <a aria-label="Sil" asp-controller="Message" asp-action="MoveToTrash" asp-route-id="@Model.Id" class="p-xs rounded-lg hover:bg-surface-container text-on-surface-variant transition-colors flex items-center gap-base font-label-md text-label-md">
-                <span class="material-symbols-outlined">delete</span>
-                <span class="hidden sm:inline">Sil</span>
-            </a>
-            <div class="h-6 w-px bg-outline-variant mx-xs"></div>
-            <button type="button" aria-label="Okunmadı İşaretle" class="p-xs rounded-lg hover:bg-surface-container text-on-surface-variant transition-colors flex items-center justify-center">
-                <span class="material-symbols-outlined">mark_email_unread</span>
-            </button>
+            @if (ViewBag.CanStar == true)
+            {
+                <a asp-route-returnUrl="@Url.Action("MailDetail", new { id = Model.Id })" asp-controller="Message" asp-action="ToggleImportant" asp-route-id="@Model.Id" aria-label="Yıldız" class="p-xs rounded-lg hover:bg-surface-container text-on-surface-variant transition-colors flex items-center justify-center">
+                    <span class="material-symbols-outlined @(Model.IsImportant ? "text-primary" : "")" style="font-variation-settings: 'FILL' @(Model.IsImportant ? 1 : 0);">star</span>
+                </a>
+            }
+            @if (ViewBag.IsInTrash == true)
+            {
+                <a asp-controller="Message" asp-action="Restore" asp-route-id="@Model.Id" aria-label="Geri yükle" class="p-xs rounded-lg hover:bg-surface-container text-on-surface-variant transition-colors flex items-center gap-base font-label-md text-label-md">
+                    <span class="material-symbols-outlined">restore_from_trash</span>
+                    <span class="hidden sm:inline">Geri yükle</span>
+                </a>
+                <a asp-controller="Message" asp-action="DeleteForever" asp-route-id="@Model.Id" aria-label="Kalıcı olarak sil" class="p-xs rounded-lg hover:bg-error-container text-on-surface-variant transition-colors flex items-center gap-base font-label-md text-label-md">
+                    <span class="material-symbols-outlined">delete_forever</span>
+                    <span class="hidden sm:inline">Kalıcı sil</span>
+                </a>
+            }
+            else
+            {
+                <a aria-label="Sil" asp-controller="Message" asp-action="MoveToTrash" asp-route-id="@Model.Id" class="p-xs rounded-lg hover:bg-surface-container text-on-surface-variant transition-colors flex items-center gap-base font-label-md text-label-md">
+                    <span class="material-symbols-outlined">delete</span>
+                    <span class="hidden sm:inline">Sil</span>
+                </a>
+            }
+            @if (ViewBag.CanMarkUnread == true)
+            {
+                <div class="h-6 w-px bg-outline-variant mx-xs"></div>
+                <a asp-controller="Message" asp-action="MarkUnread" asp-route-id="@Model.Id" aria-label="Okunmadı İşaretle" class="p-xs rounded-lg hover:bg-surface-container text-on-surface-variant transition-colors flex items-center justify-center">
+                    <span class="material-symbols-outlined">mark_email_unread</span>
+                </a>
+            }
         </div>
     </div>
   

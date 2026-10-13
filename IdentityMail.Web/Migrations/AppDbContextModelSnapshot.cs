@@ -152,6 +152,12 @@ namespace IdentityMail.Web.Migrations
                     b.Property<bool>("IsDraft")
                         .HasColumnType("bit");
 
+                    b.Property<bool>("IsPurgedByReceiver")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsPurgedBySender")
+                        .HasColumnType("bit");
+
                     b.Property<bool>("IsImportant")
                         .HasColumnType("bit");
 

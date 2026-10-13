@@ -11,6 +11,8 @@
         public bool IsDraft { get; set; }
         public bool IsDeletedBySender { get; set; }
         public bool IsDeletedByReceiver { get; set; }
+        public bool IsPurgedBySender { get; set; }
+        public bool IsPurgedByReceiver { get; set; }
 
         public AppUser Sender { get; set; }
         public int SenderId { get; set; }
