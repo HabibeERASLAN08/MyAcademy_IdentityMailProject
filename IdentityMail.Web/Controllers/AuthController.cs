@@ -48,6 +48,7 @@ namespace IdentityMail.Web.Controllers
                 }
                 return View(registerDto);
             }
+            await _userManager.AddToRoleAsync(user, "User");
             return RedirectToAction("Login");
         }
         public IActionResult Login()
@@ -67,6 +68,11 @@ namespace IdentityMail.Web.Controllers
             }
 
             var result =await _signInManager.PasswordSignInAsync(user, loginDto.Password,false,false);
+            if (result.IsLockedOut)
+            {
+                ModelState.AddModelError(string.Empty, "Bu hesap pasif. Giriş yapılamaz.");
+                return View(loginDto);
+            }
             if (!result.Succeeded)
             {
                 ModelState.AddModelError(string.Empty, "Email veya Şifre hatalı");

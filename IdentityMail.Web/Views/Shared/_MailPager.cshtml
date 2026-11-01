@@ -1,0 +1,95 @@
+@{
+    var controller = ViewContext.RouteData.Values["controller"]?.ToString();
+    var action = ViewContext.RouteData.Values["action"]?.ToString();
+    int pageNumber = ViewBag.Page is int currentPage ? currentPage : 1;
+    int totalPages = ViewBag.TotalPages is int pages ? pages : 1;
+    int? categoryId = ViewBag.CategoryId is int cid ? cid : null;
+    bool? isRead = ViewBag.IsReadFilter is bool readVal ? readVal : null;
+    bool? isImportant = ViewBag.IsImportantFilter is bool importantVal ? importantVal : null;
+    string search = ViewBag.Search as string;
+    string sortOrder = ViewBag.SortOrder as string;
+    string startDate = ViewBag.StartDate is DateTime start ? start.ToString("yyyy-MM-dd") : null;
+    string endDate = ViewBag.EndDate is DateTime end ? end.ToString("yyyy-MM-dd") : null;
+    var pageItems = new List<int?>();
+    if (totalPages <= 7)
+    {
+        for (var i = 1; i <= totalPages; i++)
+        {
+            pageItems.Add(i);
+        }
+    }
+    else
+    {
+        pageItems.Add(1);
+        var windowStart = Math.Max(2, pageNumber - 2);
+        var windowEnd = Math.Min(totalPages - 1, pageNumber + 2);
+        if (pageNumber <= 3)
+        {
+            windowStart = 2;
+            windowEnd = 5;
+        }
+        if (pageNumber >= totalPages - 2)
+        {
+            windowStart = totalPages - 4;
+            windowEnd = totalPages - 1;
+        }
+        if (windowStart > 2)
+        {
+            pageItems.Add(null);
+        }
+        for (var i = windowStart; i <= windowEnd; i++)
+        {
+            pageItems.Add(i);
+        }
+        if (windowEnd < totalPages - 1)
+        {
+            pageItems.Add(null);
+        }
+        pageItems.Add(totalPages);
+    }
+}
+@if (totalPages > 1)
+{
+    <div class="h-12 mt-auto shrink-0 border-t border-outline-variant flex items-center justify-center gap-xs text-[13px] font-body-md bg-surface-container-lowest">
+        <a asp-controller="@controller" asp-action="@action"
+           asp-route-page="@(pageNumber - 1)"
+           asp-route-categoryId="@categoryId"
+           asp-route-isRead="@isRead"
+           asp-route-isImportant="@isImportant"
+           asp-route-search="@search"
+           asp-route-startDate="@startDate"
+           asp-route-endDate="@endDate"
+           asp-route-sortOrder="@sortOrder"
+           class="px-2 py-1 rounded @(pageNumber <= 1 ? "pointer-events-none text-outline" : "hover:bg-surface-container-low")">Önceki</a>
+        @foreach (var item in pageItems)
+        {
+            if (item == null)
+            {
+                <span class="px-1 text-outline">...</span>
+            }
+            else
+            {
+                <a asp-controller="@controller" asp-action="@action"
+                   asp-route-page="@item"
+                   asp-route-categoryId="@categoryId"
+                   asp-route-isRead="@isRead"
+                   asp-route-isImportant="@isImportant"
+                   asp-route-search="@search"
+                   asp-route-startDate="@startDate"
+                   asp-route-endDate="@endDate"
+                   asp-route-sortOrder="@sortOrder"
+                   class="min-w-[28px] h-7 px-2 rounded flex items-center justify-center @(item == pageNumber ? "text-primary font-bold bg-surface-container" : "hover:bg-surface-container-low")">@item</a>
+            }
+        }
+        <a asp-controller="@controller" asp-action="@action"
+           asp-route-page="@(pageNumber + 1)"
+           asp-route-categoryId="@categoryId"
+           asp-route-isRead="@isRead"
+           asp-route-isImportant="@isImportant"
+           asp-route-search="@search"
+           asp-route-startDate="@startDate"
+           asp-route-endDate="@endDate"
+           asp-route-sortOrder="@sortOrder"
+           class="px-2 py-1 rounded @(pageNumber >= totalPages ? "pointer-events-none text-outline" : "hover:bg-surface-container-low")">Sonraki</a>
+    </div>
+}

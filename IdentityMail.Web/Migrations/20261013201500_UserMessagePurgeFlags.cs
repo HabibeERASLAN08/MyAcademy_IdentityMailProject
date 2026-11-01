@@ -1,10 +1,13 @@
+using IdentityMail.Web.Context;
+using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
 namespace IdentityMail.Web.Migrations
 {
-    /// <inheritdoc />
+    [DbContext(typeof(AppDbContext))]
+    [Migration("20261013201500_UserMessagePurgeFlags")]
     public partial class UserMessagePurgeFlags : Migration
     {
         /// <inheritdoc />

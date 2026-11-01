@@ -1,0 +1,38 @@
+@model List<UserMessage>
+@{
+    Layout = "_MailLayout";
+    ViewData["Title"] = "Şikayet ettiklerim";
+}
+
+<div class="h-14 border-b border-outline-variant flex items-center px-md justify-between bg-surface-container-lowest shrink-0">
+    <h1 class="text-[22px] font-semibold tracking-tight text-on-surface">Şikayet ettiklerim</h1>
+    <span class="font-body-md text-[13px] text-on-surface-variant">@(ViewBag.TotalCount is int totalCount ? totalCount : Model.Count) mesaj</span>
+</div>
+<div class="flex-1 overflow-y-auto">
+    @if ((ViewBag.TotalCount is int allCount ? allCount : Model.Count) == 0)
+    {
+        <p class="px-md py-6 font-body-md text-on-surface-variant">Şikayet ettiğin mesaj yok.</p>
+    }
+    else
+    {
+        var reviewedMap = ViewBag.ReviewedMap as Dictionary<int, bool>;
+        foreach (var item in Model)
+        {
+            var reviewed = reviewedMap != null && reviewedMap.ContainsKey(item.Id) && reviewedMap[item.Id];
+            var isUnread = !item.IsRead;
+            var nameClass = isUnread ? "font-body-md font-bold text-on-surface truncate" : "font-body-md text-on-surface-variant truncate";
+            <a class="flex items-center px-md py-3 border-b border-outline-variant @(isUnread ? "bg-surface-container-low" : "bg-surface-container-lowest") hover:bg-surface-container-highest transition-colors duration-200" asp-controller="Message" asp-action="MailDetail" asp-route-id="@item.Id" asp-route-from="Reported">
+                <span class="material-symbols-outlined mr-sm @(reviewed ? "text-on-surface-variant" : "text-error")" style="font-variation-settings: 'FILL' 1;">flag</span>
+                @if (isUnread)
+                {
+                    <span class="material-symbols-outlined text-primary text-[10px] mr-sm" style="font-variation-settings: 'FILL' 1;">circle</span>
+                }
+                <span class="w-48 shrink-0 @nameClass">@(item.Sender != null ? item.Sender.FirstName + " " + item.Sender.LastName : "")</span>
+                <span class="flex-1 min-w-0 @nameClass">@(string.IsNullOrEmpty(item.Subject) ? "(Konu yok)" : item.Subject)</span>
+                <span class="shrink-0 text-[11px] px-2 py-0.5 rounded-full mr-sm @(reviewed ? "bg-surface-container-high text-on-surface-variant" : "bg-error-container text-error")">@(reviewed ? "İncelendi" : "Bekliyor")</span>
+                <span class="w-20 shrink-0 text-right @nameClass">@item.SendDate.ToString("dd.MM HH:mm")</span>
+            </a>
+        }
+    }
+</div>
+<partial name="_MailPager" />

@@ -1,7 +1,9 @@
-﻿@model UserMessage
+@model UserMessage
 @{
     Layout = "_MailLayout";
     ViewData["Title"] = "Mail Detay";
+    var cats = ViewBag.Categories as List<Category>;
+    var thread = ViewBag.Thread as List<UserMessage> ?? new List<UserMessage> { Model };
 }
 
 <!-- Top Toolbar -->
@@ -14,7 +16,7 @@
         <div class="flex items-center gap-sm">
             @if (ViewBag.CanStar == true)
             {
-                <a asp-route-returnUrl="@Url.Action("MailDetail", new { id = Model.Id })" asp-controller="Message" asp-action="ToggleImportant" asp-route-id="@Model.Id" aria-label="Yıldız" class="p-xs rounded-lg hover:bg-surface-container text-on-surface-variant transition-colors flex items-center justify-center">
+                <a asp-route-returnUrl="@Url.Action("MailDetail", new { id = Model.Id, from = ViewBag.FromFolder })" asp-controller="Message" asp-action="ToggleImportant" asp-route-id="@Model.Id" aria-label="Yıldız" class="p-xs rounded-lg hover:bg-surface-container text-on-surface-variant transition-colors flex items-center justify-center">
                     <span class="material-symbols-outlined @(Model.IsImportant ? "text-primary" : "")" style="font-variation-settings: 'FILL' @(Model.IsImportant ? 1 : 0);">star</span>
                 </a>
             }
@@ -31,61 +33,117 @@
             }
             else
             {
-                <a aria-label="Sil" asp-controller="Message" asp-action="MoveToTrash" asp-route-id="@Model.Id" class="p-xs rounded-lg hover:bg-surface-container text-on-surface-variant transition-colors flex items-center gap-base font-label-md text-label-md">
+                <a aria-label="Sil" asp-controller="Message" asp-action="MoveToTrash" asp-route-id="@Model.Id" asp-route-from="@ViewBag.FromFolder" class="p-xs rounded-lg hover:bg-surface-container text-on-surface-variant transition-colors flex items-center gap-base font-label-md text-label-md">
                     <span class="material-symbols-outlined">delete</span>
                     <span class="hidden sm:inline">Sil</span>
                 </a>
             }
+            @if (ViewBag.CanReport == true)
+            {
+                if (ViewBag.HasReported == true)
+                {
+                    <span class="p-xs rounded-lg text-error flex items-center gap-base font-label-md text-label-md">
+                        <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">flag</span>
+                        <span class="hidden sm:inline">Şikayet edildi</span>
+                    </span>
+                }
+                else
+                {
+                    <form asp-controller="Message" asp-action="Report" asp-route-id="@Model.Id" method="post">
+                        <button type="submit" aria-label="Şikayet et" class="p-xs rounded-lg hover:bg-error-container text-on-surface-variant hover:text-error transition-colors flex items-center gap-base font-label-md text-label-md">
+                            <span class="material-symbols-outlined">flag</span>
+                            <span class="hidden sm:inline">Şikayet et</span>
+                        </button>
+                    </form>
+                }
+            }
             @if (ViewBag.CanMarkUnread == true)
             {
                 <div class="h-6 w-px bg-outline-variant mx-xs"></div>
-                <a asp-controller="Message" asp-action="MarkUnread" asp-route-id="@Model.Id" aria-label="Okunmadı İşaretle" class="p-xs rounded-lg hover:bg-surface-container text-on-surface-variant transition-colors flex items-center justify-center">
+                <a asp-controller="Message" asp-action="MarkUnread" asp-route-id="@Model.Id" asp-route-from="@ViewBag.FromFolder" aria-label="Okunmadı İşaretle" class="p-xs rounded-lg hover:bg-surface-container text-on-surface-variant transition-colors flex items-center justify-center">
                     <span class="material-symbols-outlined">mark_email_unread</span>
                 </a>
             }
+
+            @if (ViewBag.CanSetCategory == true && cats != null)
+            {
+                <select class="text-[13px] border border-outline-variant rounded-lg bg-surface-container-lowest py-1 px-2" onchange="if(this.value) window.location=this.value">
+                    <option value="">Kategori</option>
+                    @foreach (var cat in cats)
+                    {
+                        if (Model.CategoryId == cat.Id)
+                        {
+                            <option value="@Url.Action("SetCategory", "Message", new { id = Model.Id, categoryId = cat.Id, returnUrl = "/Message/MailDetail/" + Model.Id })" selected>@cat.Name</option>
+                        }
+                        else
+                        {
+                            <option value="@Url.Action("SetCategory", "Message", new { id = Model.Id, categoryId = cat.Id, returnUrl = "/Message/MailDetail/" + Model.Id })">@cat.Name</option>
+                        }
+                    }
+                    <option value="@Url.Action("SetCategory", "Message", new { id = Model.Id, categoryId = 0, returnUrl = "/Message/MailDetail/" + Model.Id })">Kaldır</option>
+                </select>
+            }
+
         </div>
     </div>
   
 </header>
-<!-- Email Content Scrollable Area -->
 <div class="flex-1 overflow-y-auto p-md lg:p-lg flex justify-center">
-    <article class="w-full max-w-container-max bg-surface-container-lowest rounded-[16px] border border-surface-container-highest p-md lg:p-lg shadow-[0px_4px_20px_rgba(61,74,107,0.04)] h-fit">
-        <!-- Email Header Info -->
-        <header class="mb-lg border-b border-surface-container-highest pb-md">
-            <div class="flex flex-col md:flex-row md:items-start justify-between gap-md mb-md">
-                <h2 class="font-headline-lg text-headline-lg text-[#3D4A6B]">@Model.Subject</h2>
-                <span class="font-label-md text-label-md text-on-surface-variant whitespace-nowrap bg-surface-container px-sm py-xs rounded-full h-fit flex items-center gap-xs">
-                    <span class="material-symbols-outlined" style="font-size: 16px;">schedule</span>
-                    @Model.SendDate.ToString("dd.MM.yyyy HH:mm")
-                </span>
-            </div>
-            <div class="flex items-center gap-md">
-                <div class="w-12 h-12 rounded-full bg-secondary-container text-on-secondary-container flex items-center justify-center font-headline-md">
-                    @Model.Sender.FirstName[0]@Model.Sender.LastName[0]
-                </div>
-                <div>
-                    <div class="flex items-center gap-sm">
-                        <h3 class="font-body-lg text-body-lg font-medium text-on-surface">@Model.Sender.FirstName @Model.Sender.LastName</h3>
-                        <span class="font-label-md text-label-md text-on-surface-variant">@Model.Sender.Email</span>
+    <div class="w-full max-w-container-max space-y-md">
+        @foreach (var item in thread)
+        {
+            <article class="bg-surface-container-lowest rounded-[16px] border border-surface-container-highest p-md lg:p-lg shadow-[0px_4px_20px_rgba(61,74,107,0.04)] h-fit">
+                <header class="mb-lg border-b border-surface-container-highest pb-md">
+                    <div class="flex flex-col md:flex-row md:items-start justify-between gap-md mb-md">
+                        <h2 class="font-headline-lg text-headline-lg text-[#3D4A6B]">@(string.IsNullOrEmpty(item.Subject) ? "(Konu yok)" : item.Subject)</h2>
+                        <span class="font-label-md text-label-md text-on-surface-variant whitespace-nowrap bg-surface-container px-sm py-xs rounded-full h-fit flex items-center gap-xs">
+                            <span class="material-symbols-outlined" style="font-size: 16px;">schedule</span>
+                            @item.SendDate.ToString("dd.MM.yyyy HH:mm")
+                        </span>
                     </div>
-                    <div class="font-label-md text-label-md text-outline flex items-center gap-xs mt-xs">
-                        Alıcı:@Model.Receiver.Email <span class="material-symbols-outlined" style="font-size: 16px;">arrow_drop_down</span>
+                    <div class="flex items-center gap-md">
+                        <div class="w-12 h-12 rounded-full bg-secondary-container text-on-secondary-container flex items-center justify-center font-headline-md">
+                            @{
+                                var senderInitials = "";
+                                if (item.Sender != null && !string.IsNullOrEmpty(item.Sender.FirstName))
+                                {
+                                    senderInitials += item.Sender.FirstName[0];
+                                }
+                                if (item.Sender != null && !string.IsNullOrEmpty(item.Sender.LastName))
+                                {
+                                    senderInitials += item.Sender.LastName[0];
+                                }
+                            }
+                            @senderInitials
+                        </div>
+                        <div>
+                            <div class="flex items-center gap-sm">
+                                <h3 class="font-body-lg text-body-lg font-medium text-on-surface">@item.Sender.FirstName @item.Sender.LastName</h3>
+                                <span class="font-label-md text-label-md text-on-surface-variant">@item.Sender.Email</span>
+                            </div>
+                            <div class="font-label-md text-label-md text-outline flex items-center gap-xs mt-xs">
+                                Alıcı:@(item.Receiver != null ? item.Receiver.Email : "Alıcı yok")
+                            </div>
+                        </div>
                     </div>
+                </header>
+                <div class="font-body-md text-body-md text-on-surface whitespace-pre-wrap">
+                    @item.Body
                 </div>
-            </div>
-        </header>
-        <!-- Email Body -->
-        <div class="font-body-md text-body-md text-on-surface space-y-md mb-lg whitespace-pre-wrap">
-            @Model.Body
-        </div>
-       
-        <!-- Footer Actions -->
-        <footer class="flex items-center gap-md border-t border-surface-container-highest pt-md">
-            <button class="px-md py-sm rounded-lg border border-[#EDE4E8] text-[#3A2E32] font-label-md text-label-md hover:bg-surface-container-low transition-colors flex items-center gap-base">
-                <span class="material-symbols-outlined">reply</span>
-                Yanıtla
-            </button>
-            
-        </footer>
-    </article>
+            </article>
+        }
+        @if (ViewBag.ShowReplyBox == true)
+        {
+            <form asp-controller="Message" asp-action="SendMail" method="post" class="bg-surface-container-lowest rounded-[16px] border border-surface-container-highest p-md shadow-[0px_4px_20px_rgba(61,74,107,0.04)]">
+                <input type="hidden" name="ReplyToId" value="@ViewBag.ReplyToId" />
+                <input type="hidden" name="ReceiverMail" value="@ViewBag.ReplyMail" />
+                <input type="hidden" name="Subject" value="@ViewBag.ReplySubject" />
+                <p class="font-label-md text-on-surface-variant mb-sm">@ViewBag.ReplyMail</p>
+                <textarea name="Body" class="w-full min-h-[120px] bg-transparent border-none focus:ring-0 text-body-md font-body-md text-on-surface resize-none mb-md" placeholder="Yanıtınızı yazın"></textarea>
+                <button type="submit" class="bg-primary-container hover:bg-surface-tint text-on-primary font-label-md text-label-md px-lg py-[10px] rounded-[12px] transition-colors">
+                    Gönder
+                </button>
+            </form>
+        }
     </div>
+</div>

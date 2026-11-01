@@ -1,0 +1,36 @@
+﻿@model List<Category>
+@{
+    Layout = "_MailLayout";
+    ViewData["Title"] = "Kategoriler";
+}
+
+<div class="h-14 shrink-0 border-b border-outline-variant flex items-center px-md justify-between bg-surface-container-lowest sticky top-0 z-10">
+    <h1 class="text-[22px] font-semibold tracking-tight text-on-surface">Kategoriler</h1>
+    <a asp-controller="Category" asp-action="Create" class="bg-primary-container text-on-primary font-label-md px-md py-sm rounded-[12px] hover:bg-surface-tint transition-colors">Yeni kategori</a>
+</div>
+<div class="flex-1 overflow-y-auto">
+    @if ((ViewBag.TotalCount is int totalCount ? totalCount : Model.Count) == 0)
+    {
+        <p class="px-md py-6 font-body-md text-on-surface-variant">Henüz kategorin yok.</p>
+    }
+    else
+    {
+        var labelColors = new[] { "#4285F4", "#34A853", "#FBBC05", "#EA4335", "#704261" };
+        var colorIndex = 0;
+        foreach (var item in Model)
+        {
+            var color = labelColors[colorIndex % labelColors.Length];
+            colorIndex++;
+            <div class="flex items-center px-md py-3 border-b border-outline-variant bg-surface-container-lowest hover:bg-surface-container-highest transition-colors duration-200">
+                <span class="material-symbols-outlined text-[20px] mr-sm" style="color: @color; font-variation-settings: 'FILL' 1;">label</span>
+                <span class="flex-1 font-body-md text-on-surface">@item.Name</span>
+                <form asp-controller="Category" asp-action="Delete" asp-route-id="@item.Id" method="post">
+                    <button type="submit" class="p-2 rounded-full hover:bg-error-container text-on-surface-variant hover:text-error">
+                        <span class="material-symbols-outlined text-[20px]">delete</span>
+                    </button>
+                </form>
+            </div>
+        }
+    }
+</div>
+<partial name="_MailPager" />

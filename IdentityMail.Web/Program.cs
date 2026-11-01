@@ -45,11 +45,56 @@ builder.Services.AddControllersWithViews();
 
 var app = builder.Build();
 
+using (var scope = app.Services.CreateScope())
+{
+    var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<AppRole>>();
+    var userManager = scope.ServiceProvider.GetRequiredService<UserManager<AppUser>>();
+    string[] roleNames = { "Admin", "User" };
+    foreach (var roleName in roleNames)
+    {
+        var exists = roleManager.RoleExistsAsync(roleName).GetAwaiter().GetResult();
+        if (!exists)
+        {
+            roleManager.CreateAsync(new AppRole { Name = roleName }).GetAwaiter().GetResult();
+        }
+    }
+
+    const string adminEmail = "admin@hmail.com";
+    const string adminPassword = "Admin123!";
+    var admin = userManager.FindByEmailAsync(adminEmail).GetAwaiter().GetResult();
+    if (admin == null)
+    {
+        admin = new AppUser
+        {
+            Email = adminEmail,
+            UserName = "admin",
+            FirstName = "Admin",
+            LastName = ""
+        };
+        userManager.CreateAsync(admin, adminPassword).GetAwaiter().GetResult();
+        admin = userManager.FindByEmailAsync(adminEmail).GetAwaiter().GetResult();
+    }
+    if (admin != null)
+    {
+        if (admin.LastName == "HMail")
+        {
+            admin.LastName = "";
+            userManager.UpdateAsync(admin).GetAwaiter().GetResult();
+        }
+        if (!userManager.IsInRoleAsync(admin, "User").GetAwaiter().GetResult())
+        {
+            userManager.AddToRoleAsync(admin, "User").GetAwaiter().GetResult();
+        }
+        if (!userManager.IsInRoleAsync(admin, "Admin").GetAwaiter().GetResult())
+        {
+            userManager.AddToRoleAsync(admin, "Admin").GetAwaiter().GetResult();
+        }
+    }
+}
+
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
 {
-    app.UseExceptionHandler("/Home/Error");
-    // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
 }
 
@@ -62,6 +107,6 @@ app.UseAuthorization();
 
 app.MapControllerRoute(
     name: "default",
-    pattern: "{controller=Home}/{action=Index}/{id?}");
+    pattern: "{controller=Auth}/{action=Login}/{id?}");
 
 app.Run();

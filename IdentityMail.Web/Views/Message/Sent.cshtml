@@ -3,8 +3,9 @@
 @{
     Layout = "_MailLayout";
     ViewData["Title"] = "Gönderilenler";
+    var unreadRows = ViewBag.RowUnread as HashSet<int>;
 }
-<form asp-controller="Message" asp-action="MoveSelectedToTrash" method="post">
+<form asp-controller="Message" asp-action="MoveSelectedToTrash" method="post" class="flex flex-col flex-1 min-h-0">
     <input type="hidden" name="returnAction" value="Sent" />
     <div class="h-14 border-b border-outline-variant flex items-center px-md justify-between bg-surface-container-lowest sticky top-0 z-10">
         <div class="flex items-center gap-sm text-on-surface-variant">
@@ -27,16 +28,17 @@
             </div>
         </div>
         <div class="flex items-center gap-sm text-on-surface-variant font-body-md text-[13px]">
-            <span>@Model.Count mesaj</span>
+            <span>@(ViewBag.TotalCount is int totalCount ? totalCount : Model.Count) mesaj</span>
         </div>
     </div>
     <div class="flex-1 overflow-y-auto">
         @foreach (var item in Model)
         {
-            var nameClass = item.IsRead ? "font-body-md text-on-surface-variant truncate" : "font-body-md font-bold text-on-surface truncate";
-            <div class="flex items-center px-md py-3 border-b border-outline-variant @(item.IsRead ? "bg-surface-container-lowest" : "bg-surface-container-low") hover:bg-surface-container-highest transition-colors duration-200">
+            var isUnread = unreadRows != null && unreadRows.Contains(item.Id);
+            var nameClass = isUnread ? "font-body-md font-bold text-on-surface truncate" : "font-body-md text-on-surface-variant truncate";
+            <div class="flex items-center px-md py-3 border-b border-outline-variant @(isUnread ? "bg-surface-container-low" : "bg-surface-container-lowest") hover:bg-surface-container-highest transition-colors duration-200">
                 <div class="flex items-center gap-sm shrink-0 z-10 text-on-surface-variant">
-                    @if (!item.IsRead)
+                    @if (isUnread)
                     {
                         <span class="material-symbols-outlined text-primary text-[10px]" style="font-variation-settings: 'FILL' 1;">circle</span>
                     }
@@ -58,3 +60,4 @@
         }
     </div>
 </form>
+<partial name="_MailPager" />

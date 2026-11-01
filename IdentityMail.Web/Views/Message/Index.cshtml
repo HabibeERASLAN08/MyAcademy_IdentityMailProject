@@ -3,9 +3,13 @@
 @{
     Layout = "_MailLayout";
     ViewData["Title"] = "Gelen Kutusu";
+    var cats = ViewBag.Categories as List<Category>;
+    var unreadRows = ViewBag.RowUnread as HashSet<int>;
+    var starredRows = ViewBag.RowStarred as HashSet<int>;
+    var rowCats = ViewBag.RowCategoryIds as Dictionary<int, int>;
 }
 
-<form asp-controller="Message" asp-action="MoveSelectedToTrash" method="post">
+<form asp-controller="Message" asp-action="MoveSelectedToTrash" method="post" class="flex flex-col flex-1 min-h-0">
     <input type="hidden" name="returnAction" value="Index" />
     <div class="h-14 border-b border-outline-variant flex items-center px-md justify-between bg-surface-container-lowest sticky top-0 z-10">
         <div class="flex items-center gap-sm text-on-surface-variant">
@@ -28,16 +32,22 @@
             </div>
         </div>
         <div class="flex items-center gap-sm text-on-surface-variant font-body-md text-[13px]">
-            <span>@Model.Count mesaj</span>
+            <a asp-controller="Message" asp-action="Index" asp-route-categoryId="@ViewBag.CategoryId" asp-route-isImportant="@ViewBag.IsImportantFilter" class="px-2 py-1 rounded @(ViewBag.IsReadFilter == null ? "text-primary font-bold" : "hover:bg-surface-container-low")">Tümü</a>
+            <a asp-controller="Message" asp-action="Index" asp-route-categoryId="@ViewBag.CategoryId" asp-route-isRead="false" asp-route-isImportant="@ViewBag.IsImportantFilter" class="px-2 py-1 rounded @(ViewBag.IsReadFilter == false ? "text-primary font-bold" : "hover:bg-surface-container-low")">Okunmamış</a>
+            <a asp-controller="Message" asp-action="Index" asp-route-categoryId="@ViewBag.CategoryId" asp-route-isRead="true" asp-route-isImportant="@ViewBag.IsImportantFilter" class="px-2 py-1 rounded @(ViewBag.IsReadFilter == true ? "text-primary font-bold" : "hover:bg-surface-container-low")">Okunmuş</a>
+            <a asp-controller="Message" asp-action="Index" asp-route-categoryId="@ViewBag.CategoryId" asp-route-isRead="@ViewBag.IsReadFilter" asp-route-isImportant="@(ViewBag.IsImportantFilter == true ? null : true)" class="px-2 py-1 rounded @(ViewBag.IsImportantFilter == true ? "text-primary font-bold" : "hover:bg-surface-container-low")">Yıldızlı</a>
+            <span>@ViewBag.TotalCount mesaj</span>
         </div>
     </div>
     <div class="flex-1 overflow-y-auto">
         @foreach (var item in Model)
         {
-            var nameClass = item.IsRead ? "font-body-md text-on-surface-variant truncate" : "font-body-md font-bold text-on-surface truncate";
-            <div class="flex items-center px-md py-3 border-b border-outline-variant @(item.IsRead ? "bg-surface-container-lowest" : "bg-surface-container-low") hover:bg-surface-container-highest transition-colors duration-200">
+            var isUnread = unreadRows != null && unreadRows.Contains(item.Id);
+            var isStarred = (starredRows != null && starredRows.Contains(item.Id)) || item.IsImportant;
+            var nameClass = isUnread ? "font-body-md font-bold text-on-surface truncate" : "font-body-md text-on-surface-variant truncate";
+            <div class="flex items-center px-md py-3 border-b border-outline-variant @(isUnread ? "bg-surface-container-low" : "bg-surface-container-lowest") hover:bg-surface-container-highest transition-colors duration-200">
                 <div class="flex items-center gap-sm shrink-0 z-10 text-on-surface-variant">
-                    @if (!item.IsRead)
+                    @if (isUnread)
                     {
                         <span class="material-symbols-outlined text-primary text-[10px]" style="font-variation-settings: 'FILL' 1;">circle</span>
                     }
@@ -46,13 +56,21 @@
                         <span class="w-[10px]"></span>
                     }
                     <input name="ids" value="@item.Id" class="js-row-check w-4 h-4 rounded-[4px] border-outline-variant text-primary focus:ring-primary cursor-pointer" type="checkbox" onclick="event.stopPropagation();" />
-                    <a asp-controller="Message" asp-action="ToggleImportant" asp-route-id="@item.Id" asp-route-returnUrl="/Message/Index" class="p-1 @(item.IsImportant ? "text-primary" : "text-on-surface-variant")">
-                        <span class="material-symbols-outlined text-[22px]" style="font-variation-settings: 'FILL' @(item.IsImportant ? 1 : 0);">star</span>
+                    <a asp-controller="Message" asp-action="ToggleImportant" asp-route-id="@item.Id" asp-route-returnUrl="@Url.Action("Index", new { categoryId = ViewBag.CategoryId, isRead = ViewBag.IsReadFilter, isImportant = ViewBag.IsImportantFilter })" class="p-1 @(isStarred ? "text-primary" : "text-on-surface-variant")">
+                        <span class="material-symbols-outlined text-[22px]" style="font-variation-settings: 'FILL' @(isStarred ? 1 : 0);">star</span>
                     </a>
                 </div>
                 <a class="flex items-center flex-1 min-w-0 gap-2 ml-sm" asp-controller="Message" asp-action="MailDetail" asp-route-id="@item.Id">
                     <span class="w-48 shrink-0 @nameClass">@item.Sender.FirstName @item.Sender.LastName</span>
                     <span class="flex-1 min-w-0 flex items-center gap-2">
+                        @{
+                            var catId = rowCats != null && rowCats.ContainsKey(item.Id) ? rowCats[item.Id] : item.CategoryId;
+                            var itemCat = catId.HasValue ? cats?.FirstOrDefault(x => x.Id == catId.Value) : null;
+                        }
+                        @if (itemCat != null)
+                        {
+                            <span class="shrink-0 text-[11px] px-2 py-0.5 rounded-full bg-surface-container-high text-primary">@itemCat.Name</span>
+                        }
                         <span class="@nameClass">@item.Subject</span>
                         <span class="font-body-md text-on-surface-variant truncate">- @item.Body</span>
                     </span>
@@ -62,3 +80,4 @@
         }
     </div>
 </form>
+<partial name="_MailPager" />

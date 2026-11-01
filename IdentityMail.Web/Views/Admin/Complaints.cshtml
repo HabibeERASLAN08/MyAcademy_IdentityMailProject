@@ -1,0 +1,31 @@
+@model List<MessageComplaint>
+@{
+    Layout = "_MailLayout";
+    ViewData["Title"] = "Şikayetler";
+}
+
+<div class="h-14 border-b border-outline-variant flex items-center px-md justify-between bg-surface-container-lowest shrink-0">
+    <h1 class="text-[22px] font-semibold tracking-tight text-on-surface">Şikayetler</h1>
+    <span class="font-body-md text-[13px] text-on-surface-variant">@(ViewBag.TotalCount is int totalCount ? totalCount : Model.Count) kayıt</span>
+</div>
+<div class="flex-1 overflow-y-auto">
+    @if ((ViewBag.TotalCount is int allCount ? allCount : Model.Count) == 0)
+    {
+        <p class="px-md py-6 font-body-md text-on-surface-variant">Şikayet yok.</p>
+    }
+    else
+    {
+        foreach (var item in Model)
+        {
+            <a asp-controller="Admin" asp-action="ComplaintDetail" asp-route-id="@item.Id" class="flex items-center px-md py-3 border-b border-outline-variant bg-surface-container-lowest hover:bg-surface-container-highest transition-colors duration-200">
+                <span class="material-symbols-outlined mr-sm @(item.IsReviewed ? "text-on-surface-variant" : "text-error")" style="font-variation-settings: 'FILL' 1;">flag</span>
+                <div class="flex-1 min-w-0">
+                    <p class="font-body-md text-on-surface truncate">@(item.Message?.Subject ?? "(Konu yok)")</p>
+                    <p class="font-label-md text-on-surface-variant truncate">@item.Reporter?.Email · @item.CreatedDate.ToString("dd.MM.yyyy HH:mm")</p>
+                </div>
+                <span class="shrink-0 text-[11px] px-2 py-0.5 rounded-full @(item.IsReviewed ? "bg-surface-container-high text-on-surface-variant" : "bg-error-container text-error")">@(item.IsReviewed ? "İncelendi" : "Bekliyor")</span>
+            </a>
+        }
+    }
+</div>
+<partial name="_MailPager" />

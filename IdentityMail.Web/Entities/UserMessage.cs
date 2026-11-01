@@ -17,6 +17,10 @@
         public AppUser Sender { get; set; }
         public int SenderId { get; set; }
         public AppUser Receiver { get; set; }
-        public int ReceiverId { get; set; }
+        public int? ReceiverId { get; set; }
+
+        public int? ThreadId { get; set; }
+        public int? CategoryId { get; set; }
+        public Category Category { get; set; }
     }
 }

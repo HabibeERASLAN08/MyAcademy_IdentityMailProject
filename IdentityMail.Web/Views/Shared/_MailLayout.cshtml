@@ -1,4 +1,4 @@
-﻿@using  Microsoft.AspNetCore.Identity
+﻿@using Microsoft.AspNetCore.Identity
 @using Microsoft.EntityFrameworkCore
 @using IdentityMail.Web.Context
 @inject UserManager<AppUser> UserManager
@@ -9,6 +9,9 @@
     var initials = "";
     var inboxUnread = 0;
     var draftCount = 0;
+    var reportedCount = 0;
+    var userCategories = new List<Category>();
+    var labelColors = new[] { "#4285F4", "#34A853", "#FBBC05", "#EA4335", "#704261" };
     if(currentUser!=null)
     {
         if(!string.IsNullOrEmpty(currentUser.FirstName))
@@ -21,7 +24,12 @@
         }
         initials = initials.ToUpper();
         inboxUnread = await context.UserMessages.CountAsync(x => x.ReceiverId == currentUser.Id && !x.IsRead && !x.IsDraft && !x.IsDeletedByReceiver);
-        draftCount = await context.UserMessages.CountAsync(x => x.SenderId == currentUser.Id && x.IsDraft);
+        draftCount = await context.UserMessages.CountAsync(x => x.SenderId == currentUser.Id && x.IsDraft && !x.IsDeletedBySender);
+        reportedCount = await context.MessageComplaints.CountAsync(x => x.ReporterId == currentUser.Id);
+        userCategories = await context.Categories
+    .Where(x => x.UserId == currentUser.Id)
+    .OrderBy(x => x.Name)
+    .ToListAsync();
     }
 }
 <!DOCTYPE html>
@@ -144,65 +152,147 @@
             Yeni Mesaj
         </button>
         <nav class="flex-1 flex flex-col gap-xs">
-            <a class="flex items-center justify-between px-sm py-3 text-primary font-bold bg-surface-container rounded-lg group cursor-pointer transition-colors duration-200" asp-controller="Message" asp-action="Index">
+            @{
+                var navController = ViewContext.RouteData.Values["controller"]?.ToString();
+                var navAction = ViewContext.RouteData.Values["action"]?.ToString();
+                var adminAction = navAction;
+                if (navController != "Message")
+                {
+                    navAction = "";
+                }
+                else if (navAction == "MailDetail" && ViewBag.BackAction != null)
+                {
+                    navAction = (string)ViewBag.BackAction;
+                }
+                var navCategoryId = ViewBag.CategoryId;
+                var navIdle = "flex items-center justify-between px-sm py-3 text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low rounded-lg transition-colors duration-200";
+                var navActive = "flex items-center justify-between px-sm py-3 text-primary font-bold bg-surface-container rounded-lg transition-colors duration-200";
+            }
+            <a class="@(navAction == "Index" && navCategoryId == null ? navActive : navIdle)" asp-controller="Message" asp-action="Index">
                 <div class="flex items-center gap-sm">
                     <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">inbox</span>
                     <span class="font-label-md">Gelen Kutusu</span>
                 </div>
                 <span class="font-label-md">@inboxUnread</span>
             </a>
-            <a class="flex items-center justify-between px-sm py-3 text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low rounded-lg transition-colors duration-200" asp-controller="Message"  asp-action="Sent">
+            <a class="@(navAction == "Sent" ? navActive : navIdle)" asp-controller="Message" asp-action="Sent">
                 <div class="flex items-center gap-sm">
                     <span class="material-symbols-outlined">send</span>
                     <span class="font-label-md">Gönderilenler</span>
                 </div>
             </a>
-            <a class="flex items-center justify-between px-sm py-3 text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low rounded-lg transition-colors duration-200" href="#">
+            <a class="@(navAction == "Drafts" ? navActive : navIdle)" asp-controller="Message" asp-action="Drafts">
                 <div class="flex items-center gap-sm">
                     <span class="material-symbols-outlined">draft</span>
                     <span class="font-label-md">Taslaklar</span>
                 </div>
                 <span class="font-label-md">@draftCount</span>
             </a>
-            <a class="flex items-center justify-between px-sm py-3 text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low rounded-lg transition-colors duration-200" asp-controller="Message" asp-action="Important">
+            <a class="@(navAction == "Important" ? navActive : navIdle)" asp-controller="Message" asp-action="Important">
                 <div class="flex items-center gap-sm">
                     <span class="material-symbols-outlined">star</span>
                     <span class="font-label-md">Yıldızlı</span>
                 </div>
             </a>
-            <a class="flex items-center justify-between px-sm py-3 text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low rounded-lg transition-colors duration-200 mb-md" asp-controller="Message" asp-action="Trash">
+            <a class="@(navAction == "Trash" ? navActive : navIdle)" asp-controller="Message" asp-action="Trash">
                 <div class="flex items-center gap-sm">
                     <span class="material-symbols-outlined">delete</span>
                     <span class="font-label-md">Çöp Kutusu</span>
                 </div>
             </a>
+            <a class="@(navAction == "Reported" ? navActive : navIdle) @(User.IsInRole("Admin") ? "" : "mb-md")" asp-controller="Message" asp-action="Reported">
+                <div class="flex items-center gap-sm">
+                    <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">flag</span>
+                    <span class="font-label-md">Şikayet ettiklerim</span>
+                </div>
+                <span class="font-label-md">@reportedCount</span>
+            </a>
+            @if (User.IsInRole("Admin"))
+            {
+                <a class="@(navController == "Admin" && adminAction == "Index" ? navActive : navIdle)" asp-controller="Admin" asp-action="Index">
+                    <div class="flex items-center gap-sm">
+                        <span class="material-symbols-outlined">admin_panel_settings</span>
+                        <span class="font-label-md">Yönetim</span>
+                    </div>
+                </a>
+                <a class="@(navController == "Admin" && adminAction == "Users" ? navActive : navIdle)" asp-controller="Admin" asp-action="Users">
+                    <div class="flex items-center gap-sm">
+                        <span class="material-symbols-outlined">group</span>
+                        <span class="font-label-md">Üyeler</span>
+                    </div>
+                </a>
+                <a class="@(navController == "Admin" && (adminAction == "Complaints" || adminAction == "ComplaintDetail") ? navActive : navIdle) mb-md" asp-controller="Admin" asp-action="Complaints">
+                    <div class="flex items-center gap-sm">
+                        <span class="material-symbols-outlined">flag</span>
+                        <span class="font-label-md">Şikayetler</span>
+                    </div>
+                </a>
+            }
             <div class="mt-md">
                 <div class="px-sm py-2 flex items-center justify-between group">
-                    <h3 class="font-label-md text-on-surface-variant uppercase tracking-wider text-[11px] font-bold">Kategoriler</h3>
-                    <button class="opacity-0 group-hover:opacity-100 transition-opacity text-on-surface-variant"><span class="material-symbols-outlined text-[18px]">add</span></button>
+                    <a asp-controller="Category" asp-action="Index" class="font-label-md text-on-surface-variant uppercase tracking-wider text-[11px] font-bold">Kategoriler</a>
+                    <a asp-controller="Category" asp-action="Create" class="opacity-0 group-hover:opacity-100 transition-opacity text-on-surface-variant">
+                        <span class="material-symbols-outlined text-[18px]">add</span>
+                    </a>
                 </div>
-                <a class="flex items-center gap-sm px-sm py-2 text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low rounded-lg transition-colors duration-200" href="#">
-                    <span class="material-symbols-outlined text-[18px] text-[#4285F4]" style="font-variation-settings: 'FILL' 1;">label</span>
-                    <span class="font-label-md">İş</span>
-                </a>
-                <a class="flex items-center gap-sm px-sm py-2 text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low rounded-lg transition-colors duration-200" href="#">
-                    <span class="material-symbols-outlined text-[18px] text-[#34A853]" style="font-variation-settings: 'FILL' 1;">label</span>
-                    <span class="font-label-md">Kişisel</span>
-                </a>
+                @{
+                    var colorIndex = 0;
+                }
+                @foreach (var cat in userCategories)
+                {
+                    var color = labelColors[colorIndex % labelColors.Length];
+                    colorIndex++;
+                    <a class="flex items-center gap-sm px-sm py-2 rounded-lg transition-colors duration-200 @(navAction == "Index" && navCategoryId != null && navCategoryId.ToString() == cat.Id.ToString() ? "text-primary font-bold bg-surface-container" : "text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low")" asp-controller="Message" asp-action="Index" asp-route-categoryId="@cat.Id">
+                        <span class="material-symbols-outlined text-[18px]" style="color: @color; font-variation-settings: 'FILL' 1;">label</span>
+                        <span class="font-label-md">@cat.Name</span>
+                    </a>
+                }
             </div>
         </nav>
     </aside>
 
-    <div class="flex flex-col flex-1 min-w-0 overflow-hidden">
+    <div class="flex flex-col flex-1 min-w-0">
         <header class="relative bg-surface h-16 w-full shrink-0 border-b border-outline-variant flex justify-between items-center px-lg">
             <div class="flex-1 max-w-2xl px-md">
-                <div class="relative flex items-center w-full focus-within:ring-2 focus-within:ring-primary rounded-lg bg-surface-container-lowest border border-outline-variant transition-colors duration-200">
-                    <span class="material-symbols-outlined absolute left-sm text-on-surface-variant">search</span>
-                    <input class="w-full h-12 pl-10 pr-4 bg-transparent border-none focus:ring-0 text-on-surface font-body-md placeholder-on-surface-variant rounded-lg" placeholder="Maillerde ara" type="text" />
-                    <button class="absolute right-sm p-1 rounded-full hover:bg-surface-container-low transition-colors text-on-surface-variant" type="button">
-                        <span class="material-symbols-outlined">tune</span>
-                    </button>
-                </div>
+                <form asp-controller="Message" asp-action="Index" method="get" class="relative">
+                    @if (ViewBag.CategoryId != null)
+                    {
+                        <input type="hidden" name="categoryId" value="@ViewBag.CategoryId" />
+                    }
+                    @if (ViewBag.IsReadFilter != null)
+                    {
+                        <input type="hidden" name="isRead" value="@ViewBag.IsReadFilter" />
+                    }
+                    @if (ViewBag.IsImportantFilter != null)
+                    {
+                        <input type="hidden" name="isImportant" value="@ViewBag.IsImportantFilter" />
+                    }
+                    <div class="relative flex items-center w-full focus-within:ring-2 focus-within:ring-primary rounded-lg bg-surface-container-lowest border border-outline-variant transition-colors duration-200">
+                        <span class="material-symbols-outlined absolute left-sm text-on-surface-variant">search</span>
+                        <input class="w-full h-12 pl-10 pr-12 bg-transparent border-none focus:ring-0 text-on-surface font-body-md placeholder-on-surface-variant rounded-lg" placeholder="Maillerde ara" type="text" name="search" value="@ViewBag.Search" />
+                        <button id="searchTuneBtn" class="absolute right-sm p-1 rounded-full hover:bg-surface-container-low transition-colors text-on-surface-variant" type="button">
+                            <span class="material-symbols-outlined">tune</span>
+                        </button>
+                    </div>
+                    <div id="searchTuneMenu" class="hidden absolute left-0 right-0 top-14 z-30 bg-surface-container-lowest border border-outline-variant rounded-lg shadow-lg p-md flex flex-wrap gap-sm">
+                        <div class="flex flex-col gap-1">
+                            <label class="text-[11px] text-on-surface-variant">Başlangıç</label>
+                            <input type="date" name="startDate" value="@(ViewBag.StartDate != null ? ((DateTime)ViewBag.StartDate).ToString("yyyy-MM-dd") : "")" class="h-9 px-sm rounded-lg border border-outline-variant bg-transparent text-[13px]" />
+                        </div>
+                        <div class="flex flex-col gap-1">
+                            <label class="text-[11px] text-on-surface-variant">Bitiş</label>
+                            <input type="date" name="endDate" value="@(ViewBag.EndDate != null ? ((DateTime)ViewBag.EndDate).ToString("yyyy-MM-dd") : "")" class="h-9 px-sm rounded-lg border border-outline-variant bg-transparent text-[13px]" />
+                        </div>
+                        <div class="flex flex-col gap-1">
+                            <label class="text-[11px] text-on-surface-variant">Sıralama</label>
+                            <select name="sortOrder" class="h-9 px-sm rounded-lg border border-outline-variant bg-transparent text-[13px]">
+                                <option value="">Yeni</option>
+                                <option value="asc" selected="@(ViewBag.SortOrder as string == "asc")">Eski</option>
+                            </select>
+                        </div>
+                        <button type="submit" class="h-9 px-md self-end rounded-lg bg-primary-container text-on-primary font-label-md text-[13px]">Ara</button>
+                    </div>
+                </form>
             </div>
             <div class="flex items-center gap-sm">
                 <button class="p-2 rounded-full hover:bg-surface-container-low text-on-surface-variant transition-colors" type="button">
@@ -238,6 +328,13 @@
                             <span class="material-symbols-outlined text-[24px]">lock</span>
                             <span class="font-body-md font-medium">Şifre değiştir</span>
                         </a>
+                        @if (User.IsInRole("Admin"))
+                        {
+                            <a class="flex items-center gap-md px-md py-4 hover:bg-surface-container-low text-on-surface transition-colors" asp-controller="Admin" asp-action="Index">
+                                <span class="material-symbols-outlined text-[24px]">admin_panel_settings</span>
+                                <span class="font-body-md font-medium">Yönetim</span>
+                            </a>
+                        }
                         <div class="h-[1px] bg-outline-variant my-2"></div>
                         <a class="flex items-center gap-md px-md py-4 hover:bg-surface-container-low text-error transition-colors" asp-controller="Auth" asp-action="Logout">
                             <span class="material-symbols-outlined text-[24px]">logout</span>
@@ -253,6 +350,8 @@
         <div id="composePanel" class="hidden shrink-0 fixed bottom-md right-lg w-[560px] h-[520px] bg-surface-container-lowest rounded-[12px] border border-[#EDE4E8] compose-shadow flex flex-col z-30 overflow-hidden transform transition-transform duration-300 translate-y-0 opacity-100" style="position: fixed; right: 24px; bottom: 24px; width: 560px; height: 520px; z-index: 50;">
                 <!-- Header -->
             <form asp-action="SendMail" asp-controller="Message" method="post" class="flex flex-col h-full">
+                <input type="hidden" name="Id" value="@ViewBag.DraftId" />
+                <input type="hidden" name="ReturnUrl" value="@(Context.Request.Path + Context.Request.QueryString)" />
 
                 <div class="bg-surface-container-low px-md py-sm flex justify-between items-center border-b border-[#EDE4E8]">
                     <h3 class="font-label-md text-label-md text-on-surface">Yeni Mesaj</h3>
@@ -266,7 +365,7 @@
                         <button id="composeMaximize" type="button" class="hover:text-on-surface transition-colors rounded hover:bg-surface-container p-0.5 flex items-center justify-center">
                             <span class="material-symbols-outlined text-[18px]">open_in_full</span>
                         </button>
-                        <button type="button" id="composeClose" class="hover:text-error transition-colors rounded hover:bg-error-container p-0.5 flex items-center justify-center">
+                        <button type="submit" id="composeClose" asp-controller="Message" asp-action="SaveDraft" class="hover:text-error transition-colors rounded hover:bg-error-container p-0.5 flex items-center justify-center">
                             <span class="material-symbols-outlined text-[18px]">close</span>
                         </button>
                     </div>
@@ -275,15 +374,15 @@
                 <!-- Form Fields -->
                 <div class="px-md py-xs border-b border-[#EDE4E8] flex items-center">
                     <label class="font-label-md text-label-md text-outline w-12 shrink-0" >Alıcı</label>
-                    <input class="flex-1 bg-transparent border-none focus:ring-0 text-body-md font-body-md text-on-surface placeholder:text-outline-variant py-sm" placeholder="" name="ReceiverMail" type="email" />
+                    <input class="flex-1 bg-transparent border-none focus:ring-0 text-body-md font-body-md text-on-surface placeholder:text-outline-variant py-sm" placeholder="" name="ReceiverMail" type="email" value="@ViewBag.DraftMail" />
                 </div>
                 <div class="px-md py-xs border-b border-[#EDE4E8] flex items-center">
                     <label class="font-label-md text-label-md text-outline w-12 shrink-0" >Konu</label>
-                    <input class="flex-1 bg-transparent border-none focus:ring-0 text-body-md font-body-md text-on-surface placeholder:text-outline-variant py-sm" name="Subject" placeholder="" type="text" />
+                    <input class="flex-1 bg-transparent border-none focus:ring-0 text-body-md font-body-md text-on-surface placeholder:text-outline-variant py-sm" name="Subject" placeholder="" type="text" value="@ViewBag.DraftSubject" />
                 </div>
                 <!-- Rich Text Area -->
                 <div class="flex-1 p-md bg-surface-container-lowest cursor-text relative overflow-y-auto">
-                    <textarea name="Body" class="w-full h-full bg-transparent border-none focus:ring-0 text-body-md font-body-md text-on-surface resize-none" placeholder="Mesajınızı buraya yazın"></textarea>
+                    <textarea name="Body" class="w-full h-full bg-transparent border-none focus:ring-0 text-body-md font-body-md text-on-surface resize-none" placeholder="Mesajınızı buraya yazın">@ViewBag.DraftBody</textarea>
                 </div>
                 <!-- Bottom Toolbar -->
                 <div class="px-md py-sm bg-surface-container-low border-t border-[#EDE4E8] flex justify-between items-center">
@@ -291,6 +390,9 @@
                         <button type="submit" class="bg-primary-container hover:bg-surface-tint text-on-primary font-label-md text-label-md px-lg py-[10px] rounded-[12px] transition-colors flex items-center gap-xs">
                             Gönder
                             <span class="material-symbols-outlined text-[16px]">arrow_drop_down</span>
+                        </button>
+                        <button type="submit" asp-controller="Message" asp-action="SaveDraft" class="border border-outline-variant text-on-surface font-label-md text-label-md px-md py-[10px] rounded-[12px] hover:bg-surface-container-high transition-colors">
+                            Taslak
                         </button>
                         <div class="w-px h-6 bg-[#EDE4E8] mx-xs"></div>
                         <button type="button" class="text-outline hover:text-on-surface transition-colors p-xs rounded-full hover:bg-surface-container-highest flex items-center justify-center">
@@ -315,7 +417,6 @@
                     </button>
                 </div>
            
-            <div asp-validation-summary="All" class="text-error px-md"></div>
         </form>
         </div>
         </div>
@@ -332,7 +433,18 @@
             var moreMenu = document.getElementById("moreMenu");
             if (selectMenu) selectMenu.classList.add("hidden");
             if (moreMenu) moreMenu.classList.add("hidden");
+            var searchTuneMenu = document.getElementById("searchTuneMenu");
+            if (searchTuneMenu) searchTuneMenu.classList.add("hidden");
         });
+        var searchTuneBtn = document.getElementById("searchTuneBtn");
+        var searchTuneMenu = document.getElementById("searchTuneMenu");
+        if (searchTuneBtn && searchTuneMenu) {
+            searchTuneBtn.addEventListener("click", function (e) {
+                e.stopPropagation();
+                searchTuneMenu.classList.toggle("hidden");
+            });
+            searchTuneMenu.addEventListener("click", function (e) { e.stopPropagation(); });
+        }
 
         function setAllRowChecks(checked) {
             document.querySelectorAll(".js-row-check").forEach(function (cb) { cb.checked = checked; });
@@ -359,21 +471,29 @@
 
         const composeOpen=document.getElementById("composeOpen");
         const composePanel=document.getElementById("composePanel");
+        var composeForm = composePanel ? composePanel.querySelector("form") : null;
+        if (composeForm) {
+            composeForm.addEventListener("submit", function () {
+                sessionStorage.removeItem("hmailCompose");
+            });
+        }
         if(sessionStorage.getItem("hmailCompose")==="1"){
             composePanel.classList.remove("hidden");
         }
+        @if (ViewBag.DraftId != null || ViewBag.OpenCompose == true)
+        {
+                <text>composePanel.classList.remove("hidden");</text>
+        }
         composeOpen.addEventListener("click",function(){
+            var idInput = document.querySelector("[name=Id]");
+            if (idInput) idInput.value = "";
             document.querySelector("[name=ReceiverMail]").value = "";
             document.querySelector("[name=Subject]").value = "";
             document.querySelector("[name=Body]").value = "";
             composePanel.classList.remove("hidden");
             sessionStorage.setItem("hmailCompose","1");
         });
-        document.getElementById("composeClose").addEventListener("click",function(){
-            composePanel.classList.add("hidden");
-            sessionStorage.removeItem("hmailCompose");
-        });
-                document.getElementById("composeMaximize").addEventListener("click", function () {
+        document.getElementById("composeMaximize").addEventListener("click", function () {
             if (composePanel.style.width === "560px" || composePanel.style.width === "") {
                 composePanel.style.width = "calc(100vw - 400px)";
                 composePanel.style.height = "calc(100vh - 120px)";

@@ -1,0 +1,50 @@
+@model MessageComplaint
+@{
+    Layout = "_MailLayout";
+    ViewData["Title"] = "Şikayet detayı";
+}
+
+<div class="h-14 border-b border-outline-variant flex items-center px-md gap-sm bg-surface-container-lowest shrink-0">
+    <a asp-controller="Admin" asp-action="Complaints" class="p-2 rounded-full hover:bg-surface-container-low text-on-surface-variant">
+        <span class="material-symbols-outlined">arrow_back</span>
+    </a>
+    <h1 class="text-[22px] font-semibold tracking-tight text-on-surface">Şikayet detayı</h1>
+</div>
+<div class="flex-1 overflow-y-auto p-md">
+    <article class="bg-surface-container-lowest rounded-[16px] border border-surface-container-highest p-md lg:p-lg shadow-[0px_4px_20px_rgba(61,74,107,0.04)]">
+        <div class="flex items-center justify-between gap-sm mb-md">
+            <h2 class="font-headline-md text-on-surface">@(string.IsNullOrEmpty(Model.Message?.Subject) ? "(Konu yok)" : Model.Message.Subject)</h2>
+            <span class="shrink-0 text-[11px] px-2 py-0.5 rounded-full @(Model.IsReviewed ? "bg-surface-container-high text-on-surface-variant" : "bg-error-container text-error")">@(Model.IsReviewed ? "İncelendi" : "Bekliyor")</span>
+        </div>
+        <p class="font-label-md text-on-surface-variant mb-xs">Gönderen: @(Model.Message?.Sender != null ? Model.Message.Sender.FirstName + " " + Model.Message.Sender.LastName + " · " + Model.Message.Sender.Email : "-")</p>
+        <p class="font-label-md text-on-surface-variant mb-xs">Alıcı: @(Model.Message?.Receiver != null ? Model.Message.Receiver.Email : "-")</p>
+        <p class="font-label-md text-on-surface-variant mb-md">Şikayet eden: @(Model.Reporter != null ? Model.Reporter.Email : "-") · @Model.CreatedDate.ToString("dd.MM.yyyy HH:mm")</p>
+        <div class="font-body-md text-on-surface whitespace-pre-wrap border-t border-outline-variant pt-md">
+            @(Model.Message?.Body)
+        </div>
+        <div class="flex flex-wrap gap-sm mt-md">
+            @if (!Model.IsReviewed)
+            {
+                <form asp-controller="Admin" asp-action="ReviewComplaint" asp-route-id="@Model.Id" method="post">
+                    <input type="hidden" name="makeSenderPassive" value="false" />
+                    <button type="submit" class="bg-primary-container hover:bg-surface-tint text-on-primary font-label-md px-lg py-[10px] rounded-[12px] transition-colors">
+                        İncele, işlem yok
+                    </button>
+                </form>
+            }
+            @if (ViewBag.SenderIsPassive == true)
+            {
+                <span class="font-label-md text-error px-lg py-[10px]">Gönderen şu an pasif.</span>
+            }
+            else
+            {
+                <form asp-controller="Admin" asp-action="ReviewComplaint" asp-route-id="@Model.Id" method="post">
+                    <input type="hidden" name="makeSenderPassive" value="true" />
+                    <button type="submit" class="bg-error-container text-error font-label-md px-lg py-[10px] rounded-[12px] hover:opacity-90 transition-colors">
+                        Göndereni pasif yap
+                    </button>
+                </form>
+            }
+        </div>
+    </article>
+</div>

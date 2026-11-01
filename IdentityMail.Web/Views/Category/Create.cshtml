@@ -1,0 +1,22 @@
+﻿@{
+    Layout = "_MailLayout";
+    ViewData["Title"] = "Yeni kategori";
+}
+
+<div class="h-14 border-b border-outline-variant flex items-center px-md bg-surface-container-lowest">
+    <a asp-controller="Category" asp-action="Index" class="p-2 rounded-full hover:bg-surface-container-low text-on-surface-variant mr-sm">
+        <span class="material-symbols-outlined">arrow_back</span>
+    </a>
+    <h1 class="text-[22px] font-semibold tracking-tight text-on-surface">Yeni kategori</h1>
+</div>
+<div class="p-md max-w-xl">
+    <form asp-controller="Category" asp-action="Create" method="post">
+        <div asp-validation-summary="All" class="text-error mb-md"></div>
+        <label class="font-label-md text-on-surface-variant">Ad</label>
+        <input name="name" class="w-full mt-xs mb-md bg-surface-container-lowest border border-outline-variant rounded-lg px-md py-sm font-body-md text-on-surface focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary" type="text" />
+        <div class="flex items-center gap-sm">
+            <button type="submit" class="bg-primary-container text-on-primary font-label-md px-md py-sm rounded-[12px] hover:bg-surface-tint transition-colors">Kaydet</button>
+            <a asp-controller="Category" asp-action="Index" class="font-label-md text-on-surface-variant hover:text-on-surface">İptal</a>
+        </div>
+    </form>
+</div>

@@ -1,0 +1,107 @@
+@{
+    Layout = "_MailLayout";
+    ViewData["Title"] = "Yönetim";
+    var topSenders = ViewBag.TopSenders as List<IdentityMail.Web.DTOs.AdminDtos.AdminStatRow> ?? new List<IdentityMail.Web.DTOs.AdminDtos.AdminStatRow>();
+    var topCategories = ViewBag.TopCategories as List<IdentityMail.Web.DTOs.AdminDtos.AdminStatRow> ?? new List<IdentityMail.Web.DTOs.AdminDtos.AdminStatRow>();
+    var maxSender = topSenders.Count == 0 ? 1 : topSenders.Max(x => x.Count);
+    var maxCategory = topCategories.Count == 0 ? 1 : topCategories.Max(x => x.Count);
+}
+
+<div class="h-14 border-b border-outline-variant flex items-center px-md bg-surface-container-lowest shrink-0">
+    <h1 class="text-[22px] font-semibold tracking-tight text-on-surface">Yönetim</h1>
+</div>
+<div class="flex-1 overflow-y-auto p-md space-y-md">
+    <div class="grid grid-cols-2 lg:grid-cols-3 gap-sm">
+        <a asp-controller="Admin" asp-action="Users" class="bg-surface-container rounded-[16px] p-md block hover:bg-surface-container-high transition-colors">
+            <div class="w-10 h-10 rounded-[12px] bg-primary-container text-on-primary flex items-center justify-center mb-sm">
+                <span class="material-symbols-outlined">group</span>
+            </div>
+            <p class="font-label-md text-on-surface-variant">Toplam kullanıcı</p>
+            <p class="font-headline-md text-on-surface">@ViewBag.UserCount</p>
+        </a>
+        <a asp-controller="Admin" asp-action="Users" class="bg-surface-container rounded-[16px] p-md block hover:bg-surface-container-high transition-colors">
+            <div class="w-10 h-10 rounded-[12px] bg-primary-container text-on-primary flex items-center justify-center mb-sm">
+                <span class="material-symbols-outlined">person</span>
+            </div>
+            <p class="font-label-md text-on-surface-variant">Aktif kullanıcı</p>
+            <p class="font-headline-md text-on-surface">@ViewBag.ActiveCount</p>
+        </a>
+        <div class="bg-surface-container rounded-[16px] p-md">
+            <div class="w-10 h-10 rounded-[12px] bg-primary-container text-on-primary flex items-center justify-center mb-sm">
+                <span class="material-symbols-outlined">mail</span>
+            </div>
+            <p class="font-label-md text-on-surface-variant">Toplam mesaj</p>
+            <p class="font-headline-md text-on-surface">@ViewBag.MessageCount</p>
+        </div>
+        <div class="bg-surface-container rounded-[16px] p-md">
+            <div class="w-10 h-10 rounded-[12px] bg-secondary-container text-on-secondary-container flex items-center justify-center mb-sm">
+                <span class="material-symbols-outlined">today</span>
+            </div>
+            <p class="font-label-md text-on-surface-variant">Bugün gönderilen</p>
+            <p class="font-headline-md text-on-surface">@ViewBag.TodayCount</p>
+        </div>
+        <div class="bg-surface-container rounded-[16px] p-md">
+            <div class="w-10 h-10 rounded-[12px] bg-secondary-container text-on-secondary-container flex items-center justify-center mb-sm">
+                <span class="material-symbols-outlined">mark_email_unread</span>
+            </div>
+            <p class="font-label-md text-on-surface-variant">Okunmamış mesaj</p>
+            <p class="font-headline-md text-on-surface">@ViewBag.UnreadCount</p>
+        </div>
+        <div class="bg-surface-container rounded-[16px] p-md">
+            <div class="w-10 h-10 rounded-[12px] bg-error-container text-error flex items-center justify-center mb-sm">
+                <span class="material-symbols-outlined">delete</span>
+            </div>
+            <p class="font-label-md text-on-surface-variant">Çöp kutusunda</p>
+            <p class="font-headline-md text-on-surface">@ViewBag.TrashCount</p>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-sm">
+        <div class="bg-surface-container-lowest rounded-[16px] border border-surface-container-highest p-md shadow-[0px_4px_20px_rgba(61,74,107,0.04)]">
+            <p class="font-body-md font-medium text-on-surface mb-md">En fazla mesaj gönderenler</p>
+            @if (topSenders.Count == 0)
+            {
+                <p class="font-body-md text-on-surface-variant">Kayıt yok.</p>
+            }
+            else
+            {
+                foreach (var item in topSenders)
+                {
+                    var width = (int)Math.Round(item.Count * 100.0 / maxSender);
+                    <div class="mb-sm">
+                        <div class="flex items-center justify-between mb-1">
+                            <span class="font-label-md text-on-surface truncate">@item.Name</span>
+                            <span class="font-label-md text-primary">@item.Count</span>
+                        </div>
+                        <div class="h-2 rounded-full bg-surface-container-high overflow-hidden">
+                            <div class="h-full rounded-full bg-primary-container" style="width: @(width)%"></div>
+                        </div>
+                    </div>
+                }
+            }
+        </div>
+        <div class="bg-surface-container-lowest rounded-[16px] border border-surface-container-highest p-md shadow-[0px_4px_20px_rgba(61,74,107,0.04)]">
+            <p class="font-body-md font-medium text-on-surface mb-md">En çok kullanılan kategoriler</p>
+            @if (topCategories.Count == 0)
+            {
+                <p class="font-body-md text-on-surface-variant">Kayıt yok.</p>
+            }
+            else
+            {
+                foreach (var item in topCategories)
+                {
+                    var width = (int)Math.Round(item.Count * 100.0 / maxCategory);
+                    <div class="mb-sm">
+                        <div class="flex items-center justify-between mb-1">
+                            <span class="font-label-md text-on-surface truncate">@item.Name</span>
+                            <span class="font-label-md text-primary">@item.Count</span>
+                        </div>
+                        <div class="h-2 rounded-full bg-surface-container-high overflow-hidden">
+                            <div class="h-full rounded-full bg-secondary-container" style="width: @(width)%"></div>
+                        </div>
+                    </div>
+                }
+            }
+        </div>
+    </div>
+</div>
